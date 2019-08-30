@@ -13,13 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Build a custome AI Platform Notebook image using Cloud Build
+# Build an AI Platform Notebook image with TF 1.14 and TFX 0.14RC0 
 
-if [[ $# < 3 ]]; then
-  echo "Error: Arguments missing. [build PROJECT_ID REPO_NAME IMAGE_TAG]"
-  exit 1
-fi
+PROJECT_ID=$(gcloud config get-value core/project)
+IMAGE_NAME=tfx-dev
+TAG=latest
 
-IMAGE_URI="gcr.io/${1}/${2}:${3}"
+IMAGE_URI="gcr.io/${PROJECT_ID}/${IMAGE_NAME}:${TAG}"
 
 gcloud builds submit --tag ${IMAGE_URI} .
