@@ -1,6 +1,6 @@
 FROM gcr.io/deeplearning-platform-release/base-cpu
 SHELL ["/bin/bash", "-c"]
-RUN apt-get update && apt-get --only-upgrade install kubectl \
+RUN apt-get update && apt-get --only-upgrade -y install kubectl \
 google-cloud-sdk \
 google-cloud-sdk-app-engine-grpc \
 google-cloud-sdk-pubsub-emulator \
