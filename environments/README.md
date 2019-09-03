@@ -4,7 +4,7 @@ This folder contains deployment configurations for reference Development, Stagin
 The configurations utilize **Terraform** and **Google Cloud SDK**.  Whenever feasible **Terraform** is a preferred approach. 
 
 The **Terraform** configurations utilize modules from
-https://github.com/jarokaz/caip-modules
+https://github.com/jarokaz/caip-modules and
 https://github.com/terraform-google-modules
 repositories
 
