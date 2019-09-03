@@ -44,8 +44,16 @@ ssh [YOUR CONFIGURATION NAME]
 ```
 
 4. Install Docker (On a Mac install Docker Desktop for Mac)
+
 https://docs.docker.com/docker-for-mac/install/
 
 5. Install Visual Studio Code
 
+https://code.visualstudio.com/download
+
+6. Install Visual Studio Code Remote Development Extension
+
+https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack
+
+7. 
 
