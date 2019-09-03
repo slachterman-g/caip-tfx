@@ -34,17 +34,18 @@ from tfx.orchestration.kubeflow import kubeflow_dag_runner
 from tfx.proto import evaluator_pb2
 from tfx.proto import pusher_pb2
 from tfx.proto import trainer_pb2
+from tfx.orchestration.kubeflow.proto import kubeflow_pb2
 
-_pipeline_name = 'chicago_taxi_pipeline_kubeflow'
+_pipeline_name = 'taxi_pipeline'
 
 # Directory and data locations (uses Google Cloud Storage).
-_input_bucket = 'gs://my-bucket'
-_output_bucket = 'gs://my-bucket'
+_input_bucket = 'gs://caip-tfx'
+_output_bucket = 'gs://caip-tfx'
 _tfx_root = os.path.join(_output_bucket, 'tfx')
 _pipeline_root = os.path.join(_tfx_root, _pipeline_name)
 
 # Google Cloud Platform project id to use when deploying this pipeline.
-_project_id = 'my-gcp-project'
+_project_id = 'jk-demo1'
 
 # Python module file to inject customized logic into the TFX components. The
 # Transform and Trainer both require user-defined functions to run successfully.
@@ -88,7 +89,7 @@ _ai_platform_serving_args = {
     # Starting from TFX 0.14, 'runtime_version' is not relevant anymore.
     # Instead, it will be populated by TFX as <major>.<minor> version of
     # the imported TensorFlow package;
-    'runtime_version': '1.13',
+    #'runtime_version': '1.13',
 }
 
 # Beam args to run data processing on DataflowRunner.
@@ -246,11 +247,21 @@ if __name__ == '__main__':
   # lightweight deployment option, you may need to override the defaults.
   metadata_config = kubeflow_dag_runner.get_default_kubeflow_metadata_config()
 
+#  metadata_config = kubeflow_pb2.KubeflowMetadataConfig()
+#  metadata_config.mysql_db_service_host.value = "mysql"
+#  metadata_config.mysql_db_service_port.value = "3306"
+#  metadata_config.mysql_db_name.value = "metadb"
+#  metadata_config.mysql_db_user.value = "root"
+#  metadata_config.mysql_db_password.value = ""
+#
   runner_config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
       kubeflow_metadata_config=metadata_config,
       # Specify custom docker image to use.
       # tfx_image='...'
   )
+
+  print(metadata_config)
+
 
   kubeflow_dag_runner.KubeflowDagRunner(config=runner_config).run(
       _create_pipeline(

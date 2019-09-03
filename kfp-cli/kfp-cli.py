@@ -95,5 +95,4 @@ class KFPClient(object):
 
 
 if __name__ == "__main__":
-  print("hello")
-  #fire.Fire(KFPClient)
+  fire.Fire(KFPClient)
