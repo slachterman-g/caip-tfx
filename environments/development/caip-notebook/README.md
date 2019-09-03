@@ -3,5 +3,7 @@ The notebook's container image is a derivative of the `base-cpu` Deep Learning c
 - Python 3.6.8
 - Tensorflow 1.14
 - TFX 0.14
-- KFP SDK 0.1.27
+- The latest version of KFP SDK 
 - Fire 
+The above packages are pre-installed in a conda environment named `tfx`. This environment is linked into a Jupyter kernel also named `tfx`.
+
