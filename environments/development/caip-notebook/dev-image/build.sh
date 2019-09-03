@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Build an AI Platform Notebook image with TF 1.14 and TFX 0.14RC0 
+# Build an AI Platform Notebook image with TF 1.14 and TFX 0.14RC0
 
 PROJECT_ID=$(gcloud config get-value core/project)
 IMAGE_NAME=tfx-dev
