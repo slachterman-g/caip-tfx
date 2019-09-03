@@ -27,10 +27,25 @@ gcloud compute instances describe "${INSTANCE_NAME}" \
 ## Using the TFX/KFP development image with Visual Studio Code
 You can also use the image with your favorite IDE. The following instructions demonstrate how to configure Visual Studio Code for remote development using an AI Platform Notebook. The instructions were tested on MacOS but should be transferable to other platforms.
 
-1. Make sure you can connect to the AI Platform Notebook's host from your workstation using `ssh`
+1. Make sure you can connect to the AI Platform Notebook's vm instance from your workstation using `ssh`
 ```
-gcloud compute ssh [YOUR AI PLATFORM NOTEBOOK NAME] --zone [YOUR ZONE]
+gcloud compute ssh [YOUR AI PLATFORM NOTEBOOK VM NAME] --zone [YOUR ZONE]
 ```
-1. Create a configuration in your `~/.ssh/config`
-1. Install Visual Studio Code
+2. Create a configuration for the VM in your `~/.ssh/config`
+```
+Host [YOUR CONFIGURATION NAME]
+  User [YOUR USER NAME]
+  HostName [YOUR VM'S IP ADDRESS
+  IdentityFile /Users/[YOUR USER NAME]/.ssh/google_compute_engine
+```
+3. Test the configuration
+```
+ssh [YOUR CONFIGURATION NAME]
+```
+
+4. Install Docker (On a Mac install Docker Desktop for Mac)
+https://docs.docker.com/docker-for-mac/install/
+
+5. Install Visual Studio Code
+
 
