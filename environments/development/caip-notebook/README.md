@@ -28,8 +28,7 @@ gcloud compute instances describe "${INSTANCE_NAME}" \
 You can also use the image with your favorite IDE. The following instructions demonstrate how to configure Visual Studio Code for remote development using an AI Platform Notebook. The instructions were tested on MacOS but should be transferable to other platforms.
 
 1. Make sure you can connect to the AI Platform Notebook's host from your workstation using `ssh`
-  - `gcloud compute ssh [YOUR AI PLATFORM NOTEBOOK NAME] --zone [YOUR ZONE]`
-
-2. Create a configuration in your `~/.ssh/config`
-3. Install Visual Studio Code
+`gcloud compute ssh [YOUR AI PLATFORM NOTEBOOK NAME] --zone [YOUR ZONE]`
+1. Create a configuration in your `~/.ssh/config`
+1. Install Visual Studio Code
 
