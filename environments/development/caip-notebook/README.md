@@ -55,5 +55,19 @@ https://code.visualstudio.com/download
 
 https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack
 
-7. 
+7. You can now connect to AI Platform Notebook using SSH tunnel. 
+  - Update the `docker.host` property in your user or workspace `settings.json` as follows
+  ```
+  "docker.host":"tcp//localhost:23750"
+  ```
+  - From a local terminal set up an SSH tunnel
+  ```
+  ssh -NL localhost:23570:/var/run/docker.sock [YOUR CONFIGURATION NAME] 
+  ```
+
+
+8. Bring up the **Command Palette** (Shift P on MacOS) and type in Remote-Containers for a full list of commands
+
+9. Choose **Attach to Running Container** and select your ssh configuration.
+
 

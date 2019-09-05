@@ -245,15 +245,15 @@ if __name__ == '__main__':
   # Metadata config. The defaults works work with the installation of
   # KF Pipelines using Kubeflow. If installing KF Pipelines using the
   # lightweight deployment option, you may need to override the defaults.
-  metadata_config = kubeflow_dag_runner.get_default_kubeflow_metadata_config()
+  # metadata_config = kubeflow_dag_runner.get_default_kubeflow_metadata_config()
 
-#  metadata_config = kubeflow_pb2.KubeflowMetadataConfig()
-#  metadata_config.mysql_db_service_host.value = "mysql"
-#  metadata_config.mysql_db_service_port.value = "3306"
-#  metadata_config.mysql_db_name.value = "metadb"
-#  metadata_config.mysql_db_user.value = "root"
-#  metadata_config.mysql_db_password.value = ""
-#
+  metadata_config = kubeflow_pb2.KubeflowMetadataConfig()
+  metadata_config.mysql_db_service_host.value = "mysql"
+  metadata_config.mysql_db_service_port.value = "3306"
+  metadata_config.mysql_db_name.value = "metadb"
+  metadata_config.mysql_db_user.value = "root"
+  metadata_config.mysql_db_password.value = ""
+
   runner_config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
       kubeflow_metadata_config=metadata_config,
       # Specify custom docker image to use.
