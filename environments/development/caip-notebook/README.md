@@ -36,7 +36,7 @@ gcloud compute ssh [YOUR AI PLATFORM NOTEBOOK VM NAME] --zone [YOUR ZONE]
 ```
 Host [YOUR CONFIGURATION NAME]
   User [YOUR USER NAME]
-  HostName [YOUR VM'S IP ADDRESS
+  HostName [YOUR VM'S IP ADDRESS]
   IdentityFile /Users/[YOUR USER NAME]/.ssh/google_compute_engine
 ```
 3. Test the configuration
