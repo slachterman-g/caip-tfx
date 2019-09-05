@@ -63,7 +63,7 @@ https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remo
   ```
   - From a local terminal set up an SSH tunnel
   ```
-  ssh -NL localhost:23570:/var/run/docker.sock [YOUR CONFIGURATION NAME] 
+  ssh -NL localhost:23750:/var/run/docker.sock [YOUR CONFIGURATION NAME] 
   ```
 
 
