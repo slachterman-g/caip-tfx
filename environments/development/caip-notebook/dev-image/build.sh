@@ -21,4 +21,4 @@ TAG=latest
 
 IMAGE_URI="gcr.io/${PROJECT_ID}/${IMAGE_NAME}:${TAG}"
 
-gcloud builds submit --tag ${IMAGE_URI} .
+gcloud builds submit --timeout 15m --tag ${IMAGE_URI} .
