@@ -67,6 +67,6 @@ https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remo
   ```
 
 
-8. In Visual Studio Code bring up the **Command Palette** (F1) and type in Remote-Containers for a full list of commands. Choose **Attach to Running Container** and select your ssh configuration.
+8. In Visual Studio Code bring up the **Command Palette** (F1) and type in **Remote-Containers** for a full list of commands. Choose **Attach to Running Container** and select your ssh configuration.
 
 
