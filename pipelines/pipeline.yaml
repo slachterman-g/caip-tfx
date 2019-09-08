@@ -1,0 +1,819 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  annotations:
+    pipelines.kubeflow.org/pipeline_spec: '{"description": "Constructs a Kubeflow
+      pipeline.\n\n      Creates Kubeflow ContainerOps for each TFX component encountered
+      in the\n      logical pipeline definition.\n      ", "name": "chicago_taxi_pipeline_kubeflow"}'
+  generateName: chicago-taxi-pipeline-kubeflow-
+spec:
+  arguments:
+    parameters: []
+  entrypoint: chicago-taxi-pipeline-kubeflow
+  serviceAccountName: pipeline-runner
+  templates:
+  - container:
+      args:
+      - --pipeline_name
+      - chicago_taxi_pipeline_kubeflow
+      - --pipeline_root
+      - gs://capi-tfx/tfx/chicago_taxi_pipeline_kubeflow
+      - --kubeflow_metadata_config
+      - "{\n  \"mysqlDbServiceHost\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_HOST\"\
+        \n  },\n  \"mysqlDbServicePort\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_PORT\"\
+        \n  },\n  \"mysqlDbName\": {\n    \"value\": \"metadb\"\n  },\n  \"mysqlDbUser\"\
+        : {\n    \"environmentVariable\": \"MYSQL_USERNAME\"\n  },\n  \"mysqlDbPassword\"\
+        : {\n    \"environmentVariable\": \"MYSQL_PASSWORD\"\n  }\n}"
+      - --additional_pipeline_args
+      - '{"beam_pipeline_args": ["--runner=DataflowRunner", "--experiments=shuffle_mode=auto",
+        "--project=jk-demo1", "--temp_location=gs://capi-tfx/tmp", "--region=us-central1"]}'
+      - --component_id
+      - BigQueryExampleGen
+      - --component_type
+      - tfx.components.example_gen.big_query_example_gen.component.BigQueryExampleGen
+      - --driver_class_path
+      - tfx.components.base.base_driver.BaseDriver
+      - --executor_spec
+      - '{"__class__": "ExecutorClassSpec", "__module__": "tfx.components.base.executor_spec",
+        "__tfx_object_type__": "jsonable", "executor_class": {"__class__": "Executor",
+        "__module__": "tfx.components.example_gen.big_query_example_gen.executor",
+        "__tfx_object_type__": "class"}}'
+      - --inputs
+      - '{}'
+      - --outputs
+      - '{"examples": [{"artifact": {"properties": {"name": {"stringValue": "examples"},
+        "type_name": {"stringValue": "ExamplesPath"}, "split": {"stringValue": "train"},
+        "producer_component": {"stringValue": "BigQueryExampleGen"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"name": "STRING", "type_name": "STRING", "state":
+        "STRING", "producer_component": "STRING", "span": "INT", "pipeline_name":
+        "STRING", "split": "STRING"}}}, {"artifact": {"properties": {"name": {"stringValue":
+        "examples"}, "type_name": {"stringValue": "ExamplesPath"}, "split": {"stringValue":
+        "eval"}, "producer_component": {"stringValue": "BigQueryExampleGen"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"split": "STRING", "name": "STRING", "type_name":
+        "STRING", "state": "STRING", "producer_component": "STRING", "span": "INT",
+        "pipeline_name": "STRING"}}}]}'
+      - --exec_properties
+      - '{"input_config": "{\n  \"splits\": [\n    {\n      \"name\": \"single_split\",\n      \"pattern\":
+        \"\\n         SELECT\\n           pickup_community_area,\\n           fare,\\n           EXTRACT(MONTH
+        FROM trip_start_timestamp) AS trip_start_month,\\n           EXTRACT(HOUR
+        FROM trip_start_timestamp) AS trip_start_hour,\\n           EXTRACT(DAYOFWEEK
+        FROM trip_start_timestamp) AS trip_start_day,\\n           UNIX_SECONDS(trip_start_timestamp)
+        AS trip_start_timestamp,\\n           pickup_latitude,\\n           pickup_longitude,\\n           dropoff_latitude,\\n           dropoff_longitude,\\n           trip_miles,\\n           pickup_census_tract,\\n           dropoff_census_tract,\\n           payment_type,\\n           company,\\n           trip_seconds,\\n           dropoff_community_area,\\n           tips\\n         FROM
+        `bigquery-public-data.chicago_taxi_trips.taxi_trips`\\n         WHERE (ABS(FARM_FINGERPRINT(unique_key))
+        / 0x7FFFFFFFFFFFFFFF)\\n           < 0.001\"\n    }\n  ]\n}", "output_config":
+        "{\n  \"splitConfig\": {\n    \"splits\": [\n      {\n        \"hashBuckets\":
+        2,\n        \"name\": \"train\"\n      },\n      {\n        \"hashBuckets\":
+        1,\n        \"name\": \"eval\"\n      }\n    ]\n  }\n}", "custom_config":
+        null}'
+      command:
+      - python
+      - /tfx-src/tfx/orchestration/kubeflow/container_entrypoint.py
+      env:
+      - name: WORKFLOW_ID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: MYSQL_USERNAME
+        valueFrom:
+          secretKeyRef:
+            key: DB_USERNAME
+            name: mysql-credentials
+      - name: MYSQL_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: DB_PASSWORD
+            name: mysql-credentials
+      image: tensorflow/tfx:0.14.0rc1
+      volumeMounts:
+      - mountPath: /secret/gcp-credentials
+        name: gcp-credentials-user-gcp-sa-2c99mt7h78
+    name: bigqueryexamplegen
+  - dag:
+      tasks:
+      - name: bigqueryexamplegen
+        template: bigqueryexamplegen
+      - dependencies:
+        - bigqueryexamplegen
+        - trainer
+        name: evaluator
+        template: evaluator
+      - dependencies:
+        - schemagen
+        - statisticsgen
+        name: examplevalidator
+        template: examplevalidator
+      - dependencies:
+        - bigqueryexamplegen
+        - trainer
+        name: modelvalidator
+        template: modelvalidator
+      - dependencies:
+        - modelvalidator
+        - trainer
+        name: pusher
+        template: pusher
+      - dependencies:
+        - statisticsgen
+        name: schemagen
+        template: schemagen
+      - dependencies:
+        - bigqueryexamplegen
+        name: statisticsgen
+        template: statisticsgen
+      - dependencies:
+        - schemagen
+        - transform
+        name: trainer
+        template: trainer
+      - dependencies:
+        - bigqueryexamplegen
+        - schemagen
+        name: transform
+        template: transform
+    name: chicago-taxi-pipeline-kubeflow
+  - container:
+      args:
+      - --pipeline_name
+      - chicago_taxi_pipeline_kubeflow
+      - --pipeline_root
+      - gs://capi-tfx/tfx/chicago_taxi_pipeline_kubeflow
+      - --kubeflow_metadata_config
+      - "{\n  \"mysqlDbServiceHost\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_HOST\"\
+        \n  },\n  \"mysqlDbServicePort\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_PORT\"\
+        \n  },\n  \"mysqlDbName\": {\n    \"value\": \"metadb\"\n  },\n  \"mysqlDbUser\"\
+        : {\n    \"environmentVariable\": \"MYSQL_USERNAME\"\n  },\n  \"mysqlDbPassword\"\
+        : {\n    \"environmentVariable\": \"MYSQL_PASSWORD\"\n  }\n}"
+      - --additional_pipeline_args
+      - '{"beam_pipeline_args": ["--runner=DataflowRunner", "--experiments=shuffle_mode=auto",
+        "--project=jk-demo1", "--temp_location=gs://capi-tfx/tmp", "--region=us-central1"]}'
+      - --component_id
+      - Evaluator
+      - --component_type
+      - tfx.components.evaluator.component.Evaluator
+      - --driver_class_path
+      - tfx.components.base.base_driver.BaseDriver
+      - --executor_spec
+      - '{"__class__": "ExecutorClassSpec", "__module__": "tfx.components.base.executor_spec",
+        "__tfx_object_type__": "jsonable", "executor_class": {"__class__": "Executor",
+        "__module__": "tfx.components.evaluator.executor", "__tfx_object_type__":
+        "class"}}'
+      - --inputs
+      - '{"examples": [{"artifact": {"properties": {"name": {"stringValue": "examples"},
+        "type_name": {"stringValue": "ExamplesPath"}, "split": {"stringValue": "train"},
+        "producer_component": {"stringValue": "BigQueryExampleGen"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"name": "STRING", "type_name": "STRING", "state":
+        "STRING", "producer_component": "STRING", "span": "INT", "pipeline_name":
+        "STRING", "split": "STRING"}}}, {"artifact": {"properties": {"name": {"stringValue":
+        "examples"}, "type_name": {"stringValue": "ExamplesPath"}, "split": {"stringValue":
+        "eval"}, "producer_component": {"stringValue": "BigQueryExampleGen"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"split": "STRING", "name": "STRING", "type_name":
+        "STRING", "state": "STRING", "producer_component": "STRING", "span": "INT",
+        "pipeline_name": "STRING"}}}], "model_exports": [{"artifact": {"properties":
+        {"name": {"stringValue": "output"}, "type_name": {"stringValue": "ModelExportPath"},
+        "split": {"stringValue": ""}, "producer_component": {"stringValue": "Trainer"},
+        "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type":
+        {"name": "ModelExportPath", "properties": {"producer_component": "STRING",
+        "span": "INT", "pipeline_name": "STRING", "split": "STRING", "name": "STRING",
+        "type_name": "STRING", "state": "STRING"}}}]}'
+      - --outputs
+      - '{"output": [{"artifact": {"properties": {"name": {"stringValue": "output"},
+        "type_name": {"stringValue": "ModelEvalPath"}, "split": {"stringValue": ""},
+        "producer_component": {"stringValue": "Evaluator"}, "pipeline_name": {"stringValue":
+        "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name": "ModelEvalPath",
+        "properties": {"name": "STRING", "type_name": "STRING", "state": "STRING",
+        "producer_component": "STRING", "span": "INT", "pipeline_name": "STRING",
+        "split": "STRING"}}}]}'
+      - --exec_properties
+      - '{"feature_slicing_spec": "{\n  \"specs\": [\n    {\n      \"columnForSlicing\":
+        [\n        \"trip_start_hour\"\n      ]\n    }\n  ]\n}"}'
+      command:
+      - python
+      - /tfx-src/tfx/orchestration/kubeflow/container_entrypoint.py
+      env:
+      - name: WORKFLOW_ID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: MYSQL_USERNAME
+        valueFrom:
+          secretKeyRef:
+            key: DB_USERNAME
+            name: mysql-credentials
+      - name: MYSQL_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: DB_PASSWORD
+            name: mysql-credentials
+      image: tensorflow/tfx:0.14.0rc1
+      volumeMounts:
+      - mountPath: /secret/gcp-credentials
+        name: gcp-credentials-user-gcp-sa-2c99mt7h78
+    name: evaluator
+  - container:
+      args:
+      - --pipeline_name
+      - chicago_taxi_pipeline_kubeflow
+      - --pipeline_root
+      - gs://capi-tfx/tfx/chicago_taxi_pipeline_kubeflow
+      - --kubeflow_metadata_config
+      - "{\n  \"mysqlDbServiceHost\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_HOST\"\
+        \n  },\n  \"mysqlDbServicePort\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_PORT\"\
+        \n  },\n  \"mysqlDbName\": {\n    \"value\": \"metadb\"\n  },\n  \"mysqlDbUser\"\
+        : {\n    \"environmentVariable\": \"MYSQL_USERNAME\"\n  },\n  \"mysqlDbPassword\"\
+        : {\n    \"environmentVariable\": \"MYSQL_PASSWORD\"\n  }\n}"
+      - --additional_pipeline_args
+      - '{"beam_pipeline_args": ["--runner=DataflowRunner", "--experiments=shuffle_mode=auto",
+        "--project=jk-demo1", "--temp_location=gs://capi-tfx/tmp", "--region=us-central1"]}'
+      - --component_id
+      - ExampleValidator
+      - --component_type
+      - tfx.components.example_validator.component.ExampleValidator
+      - --driver_class_path
+      - tfx.components.base.base_driver.BaseDriver
+      - --executor_spec
+      - '{"__class__": "ExecutorClassSpec", "__module__": "tfx.components.base.executor_spec",
+        "__tfx_object_type__": "jsonable", "executor_class": {"__class__": "Executor",
+        "__module__": "tfx.components.example_validator.executor", "__tfx_object_type__":
+        "class"}}'
+      - --inputs
+      - '{"stats": [{"artifact": {"properties": {"split": {"stringValue": "train"},
+        "producer_component": {"stringValue": "StatisticsGen"}, "pipeline_name": {"stringValue":
+        "chicago_taxi_pipeline_kubeflow"}, "name": {"stringValue": "output"}, "type_name":
+        {"stringValue": "ExampleStatisticsPath"}}}, "artifact_type": {"name": "ExampleStatisticsPath",
+        "properties": {"name": "STRING", "type_name": "STRING", "state": "STRING",
+        "producer_component": "STRING", "span": "INT", "pipeline_name": "STRING",
+        "split": "STRING"}}}, {"artifact": {"properties": {"name": {"stringValue":
+        "output"}, "type_name": {"stringValue": "ExampleStatisticsPath"}, "split":
+        {"stringValue": "eval"}, "producer_component": {"stringValue": "StatisticsGen"},
+        "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type":
+        {"name": "ExampleStatisticsPath", "properties": {"name": "STRING", "type_name":
+        "STRING", "state": "STRING", "producer_component": "STRING", "span": "INT",
+        "pipeline_name": "STRING", "split": "STRING"}}}], "schema": [{"artifact":
+        {"properties": {"name": {"stringValue": "output"}, "type_name": {"stringValue":
+        "SchemaPath"}, "split": {"stringValue": ""}, "producer_component": {"stringValue":
+        "SchemaGen"}, "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"}}},
+        "artifact_type": {"name": "SchemaPath", "properties": {"producer_component":
+        "STRING", "span": "INT", "pipeline_name": "STRING", "split": "STRING", "name":
+        "STRING", "type_name": "STRING", "state": "STRING"}}}]}'
+      - --outputs
+      - '{"output": [{"artifact": {"properties": {"split": {"stringValue": ""}, "producer_component":
+        {"stringValue": "ExampleValidator"}, "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"},
+        "name": {"stringValue": "output"}, "type_name": {"stringValue": "ExampleValidationPath"}}},
+        "artifact_type": {"name": "ExampleValidationPath", "properties": {"name":
+        "STRING", "type_name": "STRING", "state": "STRING", "producer_component":
+        "STRING", "span": "INT", "pipeline_name": "STRING", "split": "STRING"}}}]}'
+      - --exec_properties
+      - '{}'
+      command:
+      - python
+      - /tfx-src/tfx/orchestration/kubeflow/container_entrypoint.py
+      env:
+      - name: WORKFLOW_ID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: MYSQL_USERNAME
+        valueFrom:
+          secretKeyRef:
+            key: DB_USERNAME
+            name: mysql-credentials
+      - name: MYSQL_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: DB_PASSWORD
+            name: mysql-credentials
+      image: tensorflow/tfx:0.14.0rc1
+      volumeMounts:
+      - mountPath: /secret/gcp-credentials
+        name: gcp-credentials-user-gcp-sa-2c99mt7h78
+    name: examplevalidator
+  - container:
+      args:
+      - --pipeline_name
+      - chicago_taxi_pipeline_kubeflow
+      - --pipeline_root
+      - gs://capi-tfx/tfx/chicago_taxi_pipeline_kubeflow
+      - --kubeflow_metadata_config
+      - "{\n  \"mysqlDbServiceHost\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_HOST\"\
+        \n  },\n  \"mysqlDbServicePort\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_PORT\"\
+        \n  },\n  \"mysqlDbName\": {\n    \"value\": \"metadb\"\n  },\n  \"mysqlDbUser\"\
+        : {\n    \"environmentVariable\": \"MYSQL_USERNAME\"\n  },\n  \"mysqlDbPassword\"\
+        : {\n    \"environmentVariable\": \"MYSQL_PASSWORD\"\n  }\n}"
+      - --additional_pipeline_args
+      - '{"beam_pipeline_args": ["--runner=DataflowRunner", "--experiments=shuffle_mode=auto",
+        "--project=jk-demo1", "--temp_location=gs://capi-tfx/tmp", "--region=us-central1"]}'
+      - --component_id
+      - ModelValidator
+      - --component_type
+      - tfx.components.model_validator.component.ModelValidator
+      - --driver_class_path
+      - tfx.components.model_validator.driver.Driver
+      - --executor_spec
+      - '{"__class__": "ExecutorClassSpec", "__module__": "tfx.components.base.executor_spec",
+        "__tfx_object_type__": "jsonable", "executor_class": {"__class__": "Executor",
+        "__module__": "tfx.components.model_validator.executor", "__tfx_object_type__":
+        "class"}}'
+      - --inputs
+      - '{"examples": [{"artifact": {"properties": {"name": {"stringValue": "examples"},
+        "type_name": {"stringValue": "ExamplesPath"}, "split": {"stringValue": "train"},
+        "producer_component": {"stringValue": "BigQueryExampleGen"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"name": "STRING", "type_name": "STRING", "state":
+        "STRING", "producer_component": "STRING", "span": "INT", "pipeline_name":
+        "STRING", "split": "STRING"}}}, {"artifact": {"properties": {"name": {"stringValue":
+        "examples"}, "type_name": {"stringValue": "ExamplesPath"}, "split": {"stringValue":
+        "eval"}, "producer_component": {"stringValue": "BigQueryExampleGen"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"split": "STRING", "name": "STRING", "type_name":
+        "STRING", "state": "STRING", "producer_component": "STRING", "span": "INT",
+        "pipeline_name": "STRING"}}}], "model": [{"artifact": {"properties": {"name":
+        {"stringValue": "output"}, "type_name": {"stringValue": "ModelExportPath"},
+        "split": {"stringValue": ""}, "producer_component": {"stringValue": "Trainer"},
+        "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type":
+        {"name": "ModelExportPath", "properties": {"producer_component": "STRING",
+        "span": "INT", "pipeline_name": "STRING", "split": "STRING", "name": "STRING",
+        "type_name": "STRING", "state": "STRING"}}}]}'
+      - --outputs
+      - '{"blessing": [{"artifact": {"properties": {"name": {"stringValue": "blessing"},
+        "type_name": {"stringValue": "ModelBlessingPath"}, "split": {"stringValue":
+        ""}, "producer_component": {"stringValue": "ModelValidator"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ModelBlessingPath", "properties": {"producer_component": "STRING", "span":
+        "INT", "pipeline_name": "STRING", "split": "STRING", "name": "STRING", "type_name":
+        "STRING", "state": "STRING"}}}]}'
+      - --exec_properties
+      - '{}'
+      command:
+      - python
+      - /tfx-src/tfx/orchestration/kubeflow/container_entrypoint.py
+      env:
+      - name: WORKFLOW_ID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: MYSQL_USERNAME
+        valueFrom:
+          secretKeyRef:
+            key: DB_USERNAME
+            name: mysql-credentials
+      - name: MYSQL_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: DB_PASSWORD
+            name: mysql-credentials
+      image: tensorflow/tfx:0.14.0rc1
+      volumeMounts:
+      - mountPath: /secret/gcp-credentials
+        name: gcp-credentials-user-gcp-sa-2c99mt7h78
+    name: modelvalidator
+  - container:
+      args:
+      - --pipeline_name
+      - chicago_taxi_pipeline_kubeflow
+      - --pipeline_root
+      - gs://capi-tfx/tfx/chicago_taxi_pipeline_kubeflow
+      - --kubeflow_metadata_config
+      - "{\n  \"mysqlDbServiceHost\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_HOST\"\
+        \n  },\n  \"mysqlDbServicePort\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_PORT\"\
+        \n  },\n  \"mysqlDbName\": {\n    \"value\": \"metadb\"\n  },\n  \"mysqlDbUser\"\
+        : {\n    \"environmentVariable\": \"MYSQL_USERNAME\"\n  },\n  \"mysqlDbPassword\"\
+        : {\n    \"environmentVariable\": \"MYSQL_PASSWORD\"\n  }\n}"
+      - --additional_pipeline_args
+      - '{"beam_pipeline_args": ["--runner=DataflowRunner", "--experiments=shuffle_mode=auto",
+        "--project=jk-demo1", "--temp_location=gs://capi-tfx/tmp", "--region=us-central1"]}'
+      - --component_id
+      - Pusher
+      - --component_type
+      - tfx.components.pusher.component.Pusher
+      - --driver_class_path
+      - tfx.components.base.base_driver.BaseDriver
+      - --executor_spec
+      - '{"__class__": "ExecutorClassSpec", "__module__": "tfx.components.base.executor_spec",
+        "__tfx_object_type__": "jsonable", "executor_class": {"__class__": "Executor",
+        "__module__": "tfx.extensions.google_cloud_ai_platform.pusher.executor", "__tfx_object_type__":
+        "class"}}'
+      - --inputs
+      - '{"model_export": [{"artifact": {"properties": {"name": {"stringValue": "output"},
+        "type_name": {"stringValue": "ModelExportPath"}, "split": {"stringValue":
+        ""}, "producer_component": {"stringValue": "Trainer"}, "pipeline_name": {"stringValue":
+        "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name": "ModelExportPath",
+        "properties": {"producer_component": "STRING", "span": "INT", "pipeline_name":
+        "STRING", "split": "STRING", "name": "STRING", "type_name": "STRING", "state":
+        "STRING"}}}], "model_blessing": [{"artifact": {"properties": {"name": {"stringValue":
+        "blessing"}, "type_name": {"stringValue": "ModelBlessingPath"}, "split": {"stringValue":
+        ""}, "producer_component": {"stringValue": "ModelValidator"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ModelBlessingPath", "properties": {"producer_component": "STRING", "span":
+        "INT", "pipeline_name": "STRING", "split": "STRING", "name": "STRING", "type_name":
+        "STRING", "state": "STRING"}}}]}'
+      - --outputs
+      - '{"model_push": [{"artifact": {"properties": {"producer_component": {"stringValue":
+        "Pusher"}, "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"},
+        "name": {"stringValue": "model_push"}, "type_name": {"stringValue": "ModelPushPath"},
+        "split": {"stringValue": ""}}}, "artifact_type": {"name": "ModelPushPath",
+        "properties": {"split": "STRING", "name": "STRING", "type_name": "STRING",
+        "state": "STRING", "producer_component": "STRING", "span": "INT", "pipeline_name":
+        "STRING"}}}]}'
+      - --exec_properties
+      - '{"push_destination": null, "custom_config": {"ai_platform_serving_args":
+        {"model_name": "chicago_taxi", "project_id": "jk-demo1", "runtime_version":
+        "1.13"}}}'
+      command:
+      - python
+      - /tfx-src/tfx/orchestration/kubeflow/container_entrypoint.py
+      env:
+      - name: WORKFLOW_ID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: MYSQL_USERNAME
+        valueFrom:
+          secretKeyRef:
+            key: DB_USERNAME
+            name: mysql-credentials
+      - name: MYSQL_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: DB_PASSWORD
+            name: mysql-credentials
+      image: tensorflow/tfx:0.14.0rc1
+      volumeMounts:
+      - mountPath: /secret/gcp-credentials
+        name: gcp-credentials-user-gcp-sa-2c99mt7h78
+    name: pusher
+  - container:
+      args:
+      - --pipeline_name
+      - chicago_taxi_pipeline_kubeflow
+      - --pipeline_root
+      - gs://capi-tfx/tfx/chicago_taxi_pipeline_kubeflow
+      - --kubeflow_metadata_config
+      - "{\n  \"mysqlDbServiceHost\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_HOST\"\
+        \n  },\n  \"mysqlDbServicePort\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_PORT\"\
+        \n  },\n  \"mysqlDbName\": {\n    \"value\": \"metadb\"\n  },\n  \"mysqlDbUser\"\
+        : {\n    \"environmentVariable\": \"MYSQL_USERNAME\"\n  },\n  \"mysqlDbPassword\"\
+        : {\n    \"environmentVariable\": \"MYSQL_PASSWORD\"\n  }\n}"
+      - --additional_pipeline_args
+      - '{"beam_pipeline_args": ["--runner=DataflowRunner", "--experiments=shuffle_mode=auto",
+        "--project=jk-demo1", "--temp_location=gs://capi-tfx/tmp", "--region=us-central1"]}'
+      - --component_id
+      - SchemaGen
+      - --component_type
+      - tfx.components.schema_gen.component.SchemaGen
+      - --driver_class_path
+      - tfx.components.base.base_driver.BaseDriver
+      - --executor_spec
+      - '{"__class__": "ExecutorClassSpec", "__module__": "tfx.components.base.executor_spec",
+        "__tfx_object_type__": "jsonable", "executor_class": {"__class__": "Executor",
+        "__module__": "tfx.components.schema_gen.executor", "__tfx_object_type__":
+        "class"}}'
+      - --inputs
+      - '{"stats": [{"artifact": {"properties": {"split": {"stringValue": "train"},
+        "producer_component": {"stringValue": "StatisticsGen"}, "pipeline_name": {"stringValue":
+        "chicago_taxi_pipeline_kubeflow"}, "name": {"stringValue": "output"}, "type_name":
+        {"stringValue": "ExampleStatisticsPath"}}}, "artifact_type": {"name": "ExampleStatisticsPath",
+        "properties": {"name": "STRING", "type_name": "STRING", "state": "STRING",
+        "producer_component": "STRING", "span": "INT", "pipeline_name": "STRING",
+        "split": "STRING"}}}, {"artifact": {"properties": {"name": {"stringValue":
+        "output"}, "type_name": {"stringValue": "ExampleStatisticsPath"}, "split":
+        {"stringValue": "eval"}, "producer_component": {"stringValue": "StatisticsGen"},
+        "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type":
+        {"name": "ExampleStatisticsPath", "properties": {"name": "STRING", "type_name":
+        "STRING", "state": "STRING", "producer_component": "STRING", "span": "INT",
+        "pipeline_name": "STRING", "split": "STRING"}}}]}'
+      - --outputs
+      - '{"output": [{"artifact": {"properties": {"name": {"stringValue": "output"},
+        "type_name": {"stringValue": "SchemaPath"}, "split": {"stringValue": ""},
+        "producer_component": {"stringValue": "SchemaGen"}, "pipeline_name": {"stringValue":
+        "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name": "SchemaPath",
+        "properties": {"producer_component": "STRING", "span": "INT", "pipeline_name":
+        "STRING", "split": "STRING", "name": "STRING", "type_name": "STRING", "state":
+        "STRING"}}}]}'
+      - --exec_properties
+      - '{"infer_feature_shape": false}'
+      command:
+      - python
+      - /tfx-src/tfx/orchestration/kubeflow/container_entrypoint.py
+      env:
+      - name: WORKFLOW_ID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: MYSQL_USERNAME
+        valueFrom:
+          secretKeyRef:
+            key: DB_USERNAME
+            name: mysql-credentials
+      - name: MYSQL_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: DB_PASSWORD
+            name: mysql-credentials
+      image: tensorflow/tfx:0.14.0rc1
+      volumeMounts:
+      - mountPath: /secret/gcp-credentials
+        name: gcp-credentials-user-gcp-sa-2c99mt7h78
+    name: schemagen
+  - container:
+      args:
+      - --pipeline_name
+      - chicago_taxi_pipeline_kubeflow
+      - --pipeline_root
+      - gs://capi-tfx/tfx/chicago_taxi_pipeline_kubeflow
+      - --kubeflow_metadata_config
+      - "{\n  \"mysqlDbServiceHost\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_HOST\"\
+        \n  },\n  \"mysqlDbServicePort\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_PORT\"\
+        \n  },\n  \"mysqlDbName\": {\n    \"value\": \"metadb\"\n  },\n  \"mysqlDbUser\"\
+        : {\n    \"environmentVariable\": \"MYSQL_USERNAME\"\n  },\n  \"mysqlDbPassword\"\
+        : {\n    \"environmentVariable\": \"MYSQL_PASSWORD\"\n  }\n}"
+      - --additional_pipeline_args
+      - '{"beam_pipeline_args": ["--runner=DataflowRunner", "--experiments=shuffle_mode=auto",
+        "--project=jk-demo1", "--temp_location=gs://capi-tfx/tmp", "--region=us-central1"]}'
+      - --component_id
+      - StatisticsGen
+      - --component_type
+      - tfx.components.statistics_gen.component.StatisticsGen
+      - --driver_class_path
+      - tfx.components.base.base_driver.BaseDriver
+      - --executor_spec
+      - '{"__class__": "ExecutorClassSpec", "__module__": "tfx.components.base.executor_spec",
+        "__tfx_object_type__": "jsonable", "executor_class": {"__class__": "Executor",
+        "__module__": "tfx.components.statistics_gen.executor", "__tfx_object_type__":
+        "class"}}'
+      - --inputs
+      - '{"input_data": [{"artifact": {"properties": {"name": {"stringValue": "examples"},
+        "type_name": {"stringValue": "ExamplesPath"}, "split": {"stringValue": "train"},
+        "producer_component": {"stringValue": "BigQueryExampleGen"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"name": "STRING", "type_name": "STRING", "state":
+        "STRING", "producer_component": "STRING", "span": "INT", "pipeline_name":
+        "STRING", "split": "STRING"}}}, {"artifact": {"properties": {"name": {"stringValue":
+        "examples"}, "type_name": {"stringValue": "ExamplesPath"}, "split": {"stringValue":
+        "eval"}, "producer_component": {"stringValue": "BigQueryExampleGen"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"split": "STRING", "name": "STRING", "type_name":
+        "STRING", "state": "STRING", "producer_component": "STRING", "span": "INT",
+        "pipeline_name": "STRING"}}}]}'
+      - --outputs
+      - '{"output": [{"artifact": {"properties": {"split": {"stringValue": "train"},
+        "producer_component": {"stringValue": "StatisticsGen"}, "pipeline_name": {"stringValue":
+        "chicago_taxi_pipeline_kubeflow"}, "name": {"stringValue": "output"}, "type_name":
+        {"stringValue": "ExampleStatisticsPath"}}}, "artifact_type": {"name": "ExampleStatisticsPath",
+        "properties": {"name": "STRING", "type_name": "STRING", "state": "STRING",
+        "producer_component": "STRING", "span": "INT", "pipeline_name": "STRING",
+        "split": "STRING"}}}, {"artifact": {"properties": {"name": {"stringValue":
+        "output"}, "type_name": {"stringValue": "ExampleStatisticsPath"}, "split":
+        {"stringValue": "eval"}, "producer_component": {"stringValue": "StatisticsGen"},
+        "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type":
+        {"name": "ExampleStatisticsPath", "properties": {"name": "STRING", "type_name":
+        "STRING", "state": "STRING", "producer_component": "STRING", "span": "INT",
+        "pipeline_name": "STRING", "split": "STRING"}}}]}'
+      - --exec_properties
+      - '{}'
+      command:
+      - python
+      - /tfx-src/tfx/orchestration/kubeflow/container_entrypoint.py
+      env:
+      - name: WORKFLOW_ID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: MYSQL_USERNAME
+        valueFrom:
+          secretKeyRef:
+            key: DB_USERNAME
+            name: mysql-credentials
+      - name: MYSQL_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: DB_PASSWORD
+            name: mysql-credentials
+      image: tensorflow/tfx:0.14.0rc1
+      volumeMounts:
+      - mountPath: /secret/gcp-credentials
+        name: gcp-credentials-user-gcp-sa-2c99mt7h78
+    name: statisticsgen
+  - container:
+      args:
+      - --pipeline_name
+      - chicago_taxi_pipeline_kubeflow
+      - --pipeline_root
+      - gs://capi-tfx/tfx/chicago_taxi_pipeline_kubeflow
+      - --kubeflow_metadata_config
+      - "{\n  \"mysqlDbServiceHost\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_HOST\"\
+        \n  },\n  \"mysqlDbServicePort\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_PORT\"\
+        \n  },\n  \"mysqlDbName\": {\n    \"value\": \"metadb\"\n  },\n  \"mysqlDbUser\"\
+        : {\n    \"environmentVariable\": \"MYSQL_USERNAME\"\n  },\n  \"mysqlDbPassword\"\
+        : {\n    \"environmentVariable\": \"MYSQL_PASSWORD\"\n  }\n}"
+      - --additional_pipeline_args
+      - '{"beam_pipeline_args": ["--runner=DataflowRunner", "--experiments=shuffle_mode=auto",
+        "--project=jk-demo1", "--temp_location=gs://capi-tfx/tmp", "--region=us-central1"]}'
+      - --component_id
+      - Trainer
+      - --component_type
+      - tfx.components.trainer.component.Trainer
+      - --driver_class_path
+      - tfx.components.trainer.driver.Driver
+      - --executor_spec
+      - '{"__class__": "ExecutorClassSpec", "__module__": "tfx.components.base.executor_spec",
+        "__tfx_object_type__": "jsonable", "executor_class": {"__class__": "Executor",
+        "__module__": "tfx.extensions.google_cloud_ai_platform.trainer.executor",
+        "__tfx_object_type__": "class"}}'
+      - --inputs
+      - '{"examples": [{"artifact": {"properties": {"producer_component": {"stringValue":
+        "Transform"}, "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"},
+        "name": {"stringValue": "transformed_examples"}, "type_name": {"stringValue":
+        "ExamplesPath"}, "split": {"stringValue": "train"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"name": "STRING", "type_name": "STRING", "state":
+        "STRING", "producer_component": "STRING", "span": "INT", "pipeline_name":
+        "STRING", "split": "STRING"}}}, {"artifact": {"properties": {"producer_component":
+        {"stringValue": "Transform"}, "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"},
+        "name": {"stringValue": "transformed_examples"}, "type_name": {"stringValue":
+        "ExamplesPath"}, "split": {"stringValue": "eval"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"name": "STRING", "type_name": "STRING", "state":
+        "STRING", "producer_component": "STRING", "span": "INT", "pipeline_name":
+        "STRING", "split": "STRING"}}}], "transform_output": [{"artifact": {"properties":
+        {"split": {"stringValue": ""}, "producer_component": {"stringValue": "Transform"},
+        "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"}, "name":
+        {"stringValue": "transform_output"}, "type_name": {"stringValue": "TransformPath"}}},
+        "artifact_type": {"name": "TransformPath", "properties": {"split": "STRING",
+        "name": "STRING", "type_name": "STRING", "state": "STRING", "producer_component":
+        "STRING", "span": "INT", "pipeline_name": "STRING"}}}], "schema": [{"artifact":
+        {"properties": {"name": {"stringValue": "output"}, "type_name": {"stringValue":
+        "SchemaPath"}, "split": {"stringValue": ""}, "producer_component": {"stringValue":
+        "SchemaGen"}, "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"}}},
+        "artifact_type": {"name": "SchemaPath", "properties": {"producer_component":
+        "STRING", "span": "INT", "pipeline_name": "STRING", "split": "STRING", "name":
+        "STRING", "type_name": "STRING", "state": "STRING"}}}]}'
+      - --outputs
+      - '{"output": [{"artifact": {"properties": {"name": {"stringValue": "output"},
+        "type_name": {"stringValue": "ModelExportPath"}, "split": {"stringValue":
+        ""}, "producer_component": {"stringValue": "Trainer"}, "pipeline_name": {"stringValue":
+        "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name": "ModelExportPath",
+        "properties": {"producer_component": "STRING", "span": "INT", "pipeline_name":
+        "STRING", "split": "STRING", "name": "STRING", "type_name": "STRING", "state":
+        "STRING"}}}]}'
+      - --exec_properties
+      - '{"train_args": "{\n  \"numSteps\": 10000\n}", "eval_args": "{\n  \"numSteps\":
+        5000\n}", "module_file": "gs://caip-tfx/taxi_utils.py", "trainer_fn": null,
+        "custom_config": {"ai_platform_training_args": {"project": "jk-demo1", "region":
+        "us-central1"}}}'
+      command:
+      - python
+      - /tfx-src/tfx/orchestration/kubeflow/container_entrypoint.py
+      env:
+      - name: WORKFLOW_ID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: MYSQL_USERNAME
+        valueFrom:
+          secretKeyRef:
+            key: DB_USERNAME
+            name: mysql-credentials
+      - name: MYSQL_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: DB_PASSWORD
+            name: mysql-credentials
+      image: tensorflow/tfx:0.14.0rc1
+      volumeMounts:
+      - mountPath: /secret/gcp-credentials
+        name: gcp-credentials-user-gcp-sa-2c99mt7h78
+    name: trainer
+  - container:
+      args:
+      - --pipeline_name
+      - chicago_taxi_pipeline_kubeflow
+      - --pipeline_root
+      - gs://capi-tfx/tfx/chicago_taxi_pipeline_kubeflow
+      - --kubeflow_metadata_config
+      - "{\n  \"mysqlDbServiceHost\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_HOST\"\
+        \n  },\n  \"mysqlDbServicePort\": {\n    \"environmentVariable\": \"MYSQL_SERVICE_PORT\"\
+        \n  },\n  \"mysqlDbName\": {\n    \"value\": \"metadb\"\n  },\n  \"mysqlDbUser\"\
+        : {\n    \"environmentVariable\": \"MYSQL_USERNAME\"\n  },\n  \"mysqlDbPassword\"\
+        : {\n    \"environmentVariable\": \"MYSQL_PASSWORD\"\n  }\n}"
+      - --additional_pipeline_args
+      - '{"beam_pipeline_args": ["--runner=DataflowRunner", "--experiments=shuffle_mode=auto",
+        "--project=jk-demo1", "--temp_location=gs://capi-tfx/tmp", "--region=us-central1"]}'
+      - --component_id
+      - Transform
+      - --component_type
+      - tfx.components.transform.component.Transform
+      - --driver_class_path
+      - tfx.components.base.base_driver.BaseDriver
+      - --executor_spec
+      - '{"__class__": "ExecutorClassSpec", "__module__": "tfx.components.base.executor_spec",
+        "__tfx_object_type__": "jsonable", "executor_class": {"__class__": "Executor",
+        "__module__": "tfx.components.transform.executor", "__tfx_object_type__":
+        "class"}}'
+      - --inputs
+      - '{"input_data": [{"artifact": {"properties": {"name": {"stringValue": "examples"},
+        "type_name": {"stringValue": "ExamplesPath"}, "split": {"stringValue": "train"},
+        "producer_component": {"stringValue": "BigQueryExampleGen"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"name": "STRING", "type_name": "STRING", "state":
+        "STRING", "producer_component": "STRING", "span": "INT", "pipeline_name":
+        "STRING", "split": "STRING"}}}, {"artifact": {"properties": {"name": {"stringValue":
+        "examples"}, "type_name": {"stringValue": "ExamplesPath"}, "split": {"stringValue":
+        "eval"}, "producer_component": {"stringValue": "BigQueryExampleGen"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "ExamplesPath", "properties": {"split": "STRING", "name": "STRING", "type_name":
+        "STRING", "state": "STRING", "producer_component": "STRING", "span": "INT",
+        "pipeline_name": "STRING"}}}], "schema": [{"artifact": {"properties": {"name":
+        {"stringValue": "output"}, "type_name": {"stringValue": "SchemaPath"}, "split":
+        {"stringValue": ""}, "producer_component": {"stringValue": "SchemaGen"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}}}, "artifact_type": {"name":
+        "SchemaPath", "properties": {"producer_component": "STRING", "span": "INT",
+        "pipeline_name": "STRING", "split": "STRING", "name": "STRING", "type_name":
+        "STRING", "state": "STRING"}}}]}'
+      - --outputs
+      - '{"transform_output": [{"artifact": {"properties": {"split": {"stringValue":
+        ""}, "producer_component": {"stringValue": "Transform"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}, "name": {"stringValue":
+        "transform_output"}, "type_name": {"stringValue": "TransformPath"}}}, "artifact_type":
+        {"name": "TransformPath", "properties": {"split": "STRING", "name": "STRING",
+        "type_name": "STRING", "state": "STRING", "producer_component": "STRING",
+        "span": "INT", "pipeline_name": "STRING"}}}], "transformed_examples": [{"artifact":
+        {"properties": {"producer_component": {"stringValue": "Transform"}, "pipeline_name":
+        {"stringValue": "chicago_taxi_pipeline_kubeflow"}, "name": {"stringValue":
+        "transformed_examples"}, "type_name": {"stringValue": "ExamplesPath"}, "split":
+        {"stringValue": "train"}}}, "artifact_type": {"name": "ExamplesPath", "properties":
+        {"name": "STRING", "type_name": "STRING", "state": "STRING", "producer_component":
+        "STRING", "span": "INT", "pipeline_name": "STRING", "split": "STRING"}}},
+        {"artifact": {"properties": {"producer_component": {"stringValue": "Transform"},
+        "pipeline_name": {"stringValue": "chicago_taxi_pipeline_kubeflow"}, "name":
+        {"stringValue": "transformed_examples"}, "type_name": {"stringValue": "ExamplesPath"},
+        "split": {"stringValue": "eval"}}}, "artifact_type": {"name": "ExamplesPath",
+        "properties": {"name": "STRING", "type_name": "STRING", "state": "STRING",
+        "producer_component": "STRING", "span": "INT", "pipeline_name": "STRING",
+        "split": "STRING"}}}]}'
+      - --exec_properties
+      - '{"module_file": "gs://caip-tfx/taxi_utils.py", "preprocessing_fn": null}'
+      command:
+      - python
+      - /tfx-src/tfx/orchestration/kubeflow/container_entrypoint.py
+      env:
+      - name: WORKFLOW_ID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workflows.argoproj.io/workflow']
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        value: /secret/gcp-credentials/user-gcp-sa-2c99mt7h78.json
+      - name: MYSQL_USERNAME
+        valueFrom:
+          secretKeyRef:
+            key: DB_USERNAME
+            name: mysql-credentials
+      - name: MYSQL_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: DB_PASSWORD
+            name: mysql-credentials
+      image: tensorflow/tfx:0.14.0rc1
+      volumeMounts:
+      - mountPath: /secret/gcp-credentials
+        name: gcp-credentials-user-gcp-sa-2c99mt7h78
+    name: transform
+  volumes:
+  - name: gcp-credentials-user-gcp-sa-2c99mt7h78
+    secret:
+      secretName: user-gcp-sa-2c99mt7h78
