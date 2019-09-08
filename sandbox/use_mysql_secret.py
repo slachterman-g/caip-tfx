@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def use_mysql_secret(secret_name='cloudsql-credentials', db_username='MYSQL_USERNAME', db_password='MYSQL_PASSWORD'):
+def use_mysql_secret(secret_name='mysql-credentials', db_username='DB_USERNAME', db_password='DB_PASSWORD'):
     """An operator that configures the container to inject env variables with mysql credentials.
         ---
         apiVersion: v1
@@ -42,7 +42,7 @@ def use_mysql_secret(secret_name='cloudsql-credentials', db_username='MYSQL_USER
                 )
                 .add_env_variable(
                     k8s_client.V1EnvVar(
-                        name='MYSQL_PASSWORD,
+                        name='MYSQL_PASSWORD',
                         value_from=k8s_client.V1EnvVarSource(
                             secret_key_ref=k8s_client.V1SecretKeySelector(
                                 name=secret_name,
@@ -53,4 +53,4 @@ def use_mysql_secret(secret_name='cloudsql-credentials', db_username='MYSQL_USER
                 )
         )
 
-    return _use_aws_secret
+    return _use_mysql_secret

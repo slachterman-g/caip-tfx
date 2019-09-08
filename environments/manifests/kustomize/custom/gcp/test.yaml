@@ -1,0 +1,1088 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubeflow
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: scheduledworkflows.kubeflow.org
+spec:
+  group: kubeflow.org
+  names:
+    kind: ScheduledWorkflow
+    listKind: ScheduledWorkflowList
+    plural: scheduledworkflows
+    shortNames:
+    - swf
+    singular: scheduledworkflow
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    served: true
+    storage: true
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    ksonnet.io/component: pipeline
+  name: viewers.kubeflow.org
+spec:
+  group: kubeflow.org
+  names:
+    kind: Viewer
+    listKind: ViewerList
+    plural: viewers
+    shortNames:
+    - vi
+    singular: viewer
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    served: true
+    storage: true
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: workflows.argoproj.io
+spec:
+  group: argoproj.io
+  names:
+    kind: Workflow
+    plural: workflows
+    shortNames:
+    - wf
+  scope: Namespaced
+  version: v1alpha1
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argo
+  namespace: kubeflow
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ml-pipeline-persistenceagent
+  namespace: kubeflow
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ml-pipeline-scheduledworkflow
+  namespace: kubeflow
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ml-pipeline-ui
+  namespace: kubeflow
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ml-pipeline-viewer-crd-service-account
+  namespace: kubeflow
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ml-pipeline
+  namespace: kubeflow
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pipeline-runner
+  namespace: kubeflow
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: proxy-agent-runner
+  namespace: kubeflow
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: argo-role
+  namespace: kubeflow
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/exec
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflows
+  - workflows/finalizers
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ml-pipeline-persistenceagent-role
+  namespace: kubeflow
+rules:
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflows
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kubeflow.org
+  resources:
+  - scheduledworkflows
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: ml-pipeline-scheduledworkflow-role
+  name: ml-pipeline-scheduledworkflow-role
+  namespace: kubeflow
+rules:
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflows
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - kubeflow.org
+  resources:
+  - scheduledworkflows
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: ml-pipeline-ui
+  name: ml-pipeline-ui
+  namespace: kubeflow
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/log
+  verbs:
+  - create
+  - get
+  - list
+- apiGroups:
+  - kubeflow.org
+  resources:
+  - viewers
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ml-pipeline-viewer-controller-role
+  namespace: kubeflow
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - deployments
+  - services
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - kubeflow.org
+  resources:
+  - viewers
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: ml-pipeline
+  name: ml-pipeline
+  namespace: kubeflow
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - delete
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflows
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - kubeflow.org
+  resources:
+  - scheduledworkflows
+  verbs:
+  - create
+  - get
+  - list
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pipeline-runner
+  namespace: kubeflow
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  - persistentvolumeclaims
+  verbs:
+  - '*'
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshots
+  verbs:
+  - create
+  - delete
+  - get
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflows
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/exec
+  - pods/log
+  - services
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  - apps
+  - extensions
+  resources:
+  - deployments
+  - replicasets
+  verbs:
+  - '*'
+- apiGroups:
+  - kubeflow.org
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: proxy-agent-runner
+  name: proxy-agent-runner
+  namespace: kubeflow
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argo-binding
+  namespace: kubeflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argo-role
+subjects:
+- kind: ServiceAccount
+  name: argo
+  namespace: kubeflow
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ml-pipeline-persistenceagent-binding
+  namespace: kubeflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ml-pipeline-persistenceagent-role
+subjects:
+- kind: ServiceAccount
+  name: ml-pipeline-persistenceagent
+  namespace: kubeflow
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ml-pipeline-scheduledworkflow-binding
+  namespace: kubeflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ml-pipeline-scheduledworkflow-role
+subjects:
+- kind: ServiceAccount
+  name: ml-pipeline-scheduledworkflow
+  namespace: kubeflow
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: ml-pipeline-ui
+  name: ml-pipeline-ui
+  namespace: kubeflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ml-pipeline-ui
+subjects:
+- kind: ServiceAccount
+  name: ml-pipeline-ui
+  namespace: kubeflow
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ml-pipeline-viewer-crd-binding
+  namespace: kubeflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ml-pipeline-viewer-controller-role
+subjects:
+- kind: ServiceAccount
+  name: ml-pipeline-viewer-crd-service-account
+  namespace: kubeflow
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: ml-pipeline
+  name: ml-pipeline
+  namespace: kubeflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ml-pipeline
+subjects:
+- kind: ServiceAccount
+  name: ml-pipeline
+  namespace: kubeflow
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pipeline-runner-binding
+  namespace: kubeflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pipeline-runner
+subjects:
+- kind: ServiceAccount
+  name: pipeline-runner
+  namespace: kubeflow
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: proxy-agent-runner
+  name: proxy-agent-runner
+  namespace: kubeflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: proxy-agent-runner
+subjects:
+- kind: ServiceAccount
+  name: proxy-agent-runner
+  namespace: kubeflow
+---
+apiVersion: v1
+data:
+  mlmd_config.prototxt: |
+    connection_config: <
+      mysql: <
+        host: "mysql"
+        port: 3306
+        database: "metadb"
+        user: "root"
+        password: ""
+      >
+    >
+kind: ConfigMap
+metadata:
+  labels:
+    component: metadata-server
+  name: mlmd-service-configmap
+  namespace: kubeflow
+---
+apiVersion: v1
+data:
+  config: |
+    {
+    namespace: kubeflow,
+    executorImage: gcr.io/ml-pipeline/argoexec:v2.3.0,
+    artifactRepository:
+    {
+        s3: {
+            bucket: mlpipeline,
+            keyPrefix: artifacts,
+            endpoint: minio-service.kubeflow:9000,
+            insecure: true,
+            accessKeySecret: {
+                name: mlpipeline-minio-artifact,
+                key: accesskey
+            },
+            secretKeySecret: {
+                name: mlpipeline-minio-artifact,
+                key: secretkey
+            }
+        }
+    }
+    }
+kind: ConfigMap
+metadata:
+  name: workflow-controller-configmap
+  namespace: kubeflow
+---
+apiVersion: v1
+data:
+  accesskey: bWluaW8=
+  secretkey: bWluaW8xMjM=
+kind: Secret
+metadata:
+  name: mlpipeline-minio-artifact
+  namespace: kubeflow
+type: Opaque
+---
+apiVersion: v1
+data:
+  application_default_credentials.json: ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAiamstZGVtbzEiLAogICJwcml2YXRlX2tleV9pZCI6ICJkMjgyY2FjNmQ5NGQ3NjE5MWY2OWE5ODUwZjI0Y2I1ZDZjZjhmOTcyIiwKICAicHJpdmF0ZV9rZXkiOiAiLS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tXG5NSUlFdndJQkFEQU5CZ2txaGtpRzl3MEJBUUVGQUFTQ0JLa3dnZ1NsQWdFQUFvSUJBUUM4ZlM4b3ZGcnhNR1dHXG44YUNLN2VRM2tMU3VLeTJud0tUZnNrMk5namdFRkN2aldGcDRya2dNd3VpN0JwUG5pUHcvZ0g3WTlWdXVuTStjXG4zWGJHYUVOdnJNTkdDU252c1ZEdXNxODJYTGpXeTAvbUFORXhEVUJ0S0ticjRkVjg4YVVKcDFHQUdrL0U5U1hYXG4zdXNaSCtsOGczejNDcEpmUUlWWmZMNG9nQWFQakhBRkNnMDlwZm9CclRWTjE1TE84RFZ0bC9ZeXpLUGdOMlNOXG5iMVNpMkhHa2NIbVUzL2lmNWRMc3E0VldiV21MRzhhWDBiSkwrMlQ2dmVNYmc1MWJSbTdkcnlxNjU5UHFEV3FiXG5CRUc4UXQxZG5rOUZRUDU5TDFvSnVDeWxtTURpWGkyaEIrc3U4TjlpdGZGK3huS1VWaXZjWXZ0YlVvNDBIY1BEXG5vWE84WkJPSEFnTUJBQUVDZ2dFQU5Edld3VW10UkJCKzJpNEVxT3R5NW9rVjRQdzdPelV5RzRHc1p5NHllc0xpXG5SSzdiNTN5WW45eTFwUHFXSzBBMWN4MlhTV1Y1SWtMM2I4ZVpuak1QbVJkOXg5OUxQVTdjbUVGeE43WHJUUzdyXG5kZGc5SUlSRkdkcjlvdm1pOFd4L3FWU3lTN2MrNnR4cXY4OVpSRTJwSlNYRkVDcmdWRUFybEJoekZBTWlqazNKXG5qNUNqZGVTWTQyVmJsZ3dIc0xIV1hxcmp4TXN6WG50L09Tc0xNd2VlWFlZN3g3Wlk2Umoxb0h0T2Q5N2V5SStxXG5XZW1nZmsyZXNubzNTMjFTMFVGUmJRazl1c0o4a3Y4bEFpVmFSWlZQQ3U0THI1Y2lzeG5aMUFQWmxGZHIxenJBXG5hdHBjbFdmUEpzOUpvVk1GczMzSjdGS21XdTI5VkUvckpyU3pHdTFqYVFLQmdRRGJ2aDlUM25RM2lMQUZ3aFpFXG55NVI1Rkx6MW90c1pvb1RvRGc1cG04ZUtYdzBIU3FqN1hjT1gyOHBSOG5pUThKS1JTdXp4TVVSa1l2Mm1kamxNXG5RZzBmZlE4eDR1Znh0OUhmdUovQSsyL0tkMUF6SmtLUDQ4YTJzak9GZG9OekZaWEdGTVRKTi9Eb1YxMmFPTUhIXG5QaXB3c2N0OEEvQllCSTBkZS84Wk5jYzJ6d0tCZ1FEYmx1b2VIUjZtSG4ybHloc2tBdndDdExwWnJFd3NZNDl2XG5NRmpVT0RvL2FyU2dhMFI5eFNRM0RuaGlyQktVTkhuMU5MU2dMWHRUOUNTTHBLNjVkSS83ZDYwWGFRNU9UY2VYXG5QZ0tJRlh1Q1hZK2NkZ0pza08zdmZ2Mm1VSGdRTDI0KytNZ1FSVnBFeGc3cXY2MHcwTzVOazg3NXpkdHEycFhXXG5XRGFBckpnRnlRS0JnUURKNURzNlBsZCtzbm92UUN4ZmxyL2FJMENkV3J4OUtBRitoM09jZWtEeUUvU1BiM3drXG5QdmkyN0h4Tm9ENC94SmlWSDBibEwwUE1DOXRLZHJLY0tzK056OFFITEplNFVSQmx3V1lkMDZYWldwZjM5cjRQXG5IOUp5QnZZcE9FTDdtS2hjTHJiQ3ZULzg2RkFhb3V6L0YxRzg2czJ2S3B0Rzh4K0lLR1d2anVaeXB3S0JnUUNRXG5Uc3hLdi81TlUwcGxjcjJGWEFTN3pvT012T05PWkp0MWljTkdyRER6VGkrb0lQWmc1UGJZeThTbnE4ZUY2RHFoXG52MkpZeGFyLzBEbFlJQURIVmVmdGJZZXVFOWRYOUZ1UGRDdjd2SXB2Y1FjWTNxRFhNaU43dWV2OXFYSk55SzNkXG42bWFuOHJ2UTZJd1RENlpFcDNtRU4vZlVTTW5DbmlYTU9DcVJRMXVncVFLQmdRREVRSDg0TmpqdUo5VmtFUWljXG4rRUd1MkU5ekZFelg0Y2lEbDVIejBUTUhvd3ZZYmI2Q3dyWE11NW1aSndFelFoMHN4RkNDNnozZDdzdWRtM1A1XG5jK0tUb2swNlFlbnVSY1Fxc2dTYTA2S0Q2ODYyVnQreDM3S2g4cVZzcHdpMFAzR3pSa1BybVNzejhvYzlzajNBXG52V3haeDlJTGp0NHN6aU1kQkNkTVJxOUVJUT09XG4tLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tXG4iLAogICJjbGllbnRfZW1haWwiOiAia2ZwLXNhQGprLWRlbW8xLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwKICAiY2xpZW50X2lkIjogIjExMzc5MDUxNTQ0NTEyNDQzNzY0NiIsCiAgImF1dGhfdXJpIjogImh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbS9vL29hdXRoMi9hdXRoIiwKICAidG9rZW5fdXJpIjogImh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwKICAiYXV0aF9wcm92aWRlcl94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL29hdXRoMi92MS9jZXJ0cyIsCiAgImNsaWVudF94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL3JvYm90L3YxL21ldGFkYXRhL3g1MDkva2ZwLXNhJTQwamstZGVtbzEuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iCn0K
+kind: Secret
+metadata:
+  name: user-gcp-sa-2c99mt7h78
+  namespace: kubeflow
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: metadata
+  name: metadata-envoy-service
+  namespace: kubeflow
+spec:
+  ports:
+  - name: md-envoy
+    port: 9090
+    protocol: TCP
+  selector:
+    component: metadata-envoy
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: metadata
+  name: metadata-service
+  namespace: kubeflow
+spec:
+  ports:
+  - name: md-backendapi
+    port: 8080
+    protocol: TCP
+  selector:
+    component: metadata-server
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-service
+  namespace: kubeflow
+spec:
+  ports:
+  - port: 9000
+    protocol: TCP
+    targetPort: 9000
+  selector:
+    app: minio
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ml-pipeline-ui
+  name: ml-pipeline-ui
+  namespace: kubeflow
+spec:
+  ports:
+  - port: 80
+    targetPort: 3000
+  selector:
+    app: ml-pipeline-ui
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-pipeline-visualizationserver
+  namespace: kubeflow
+spec:
+  ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+    targetPort: 8888
+  selector:
+    app: ml-pipeline-visualizationserver
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-pipeline
+  namespace: kubeflow
+spec:
+  ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+    targetPort: 8888
+  - name: grpc
+    port: 8887
+    protocol: TCP
+    targetPort: 8887
+  selector:
+    app: ml-pipeline
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: kubeflow
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: cloudsqlproxy
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: cloudsqlproxy
+  name: cloudsqlproxy
+  namespace: kubeflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudsqlproxy
+  template:
+    metadata:
+      labels:
+        app: cloudsqlproxy
+    spec:
+      containers:
+      - command:
+        - /cloud_sql_proxy
+        - -dir=/cloudsql
+        - -instances=$(CLOUD_SQL_INSTANCE_CONNECTION_NAME)=tcp:0.0.0.0:3306
+        - -credential_file=/credentials/application_default_credentials.json
+        - term_timeout=10s
+        env:
+        - name: CLOUD_SQL_INSTANCE_CONNECTION_NAME
+          value: jk-demo1:us-central1:jksql2
+        image: gcr.io/cloudsql-docker/gce-proxy:1.14
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - sleep
+              - "10"
+        name: cloudsqlproxy
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - mountPath: /cloudsql
+          name: cloudsql
+        - mountPath: /credentials
+          name: gcp-sa-token
+      volumes:
+      - emptyDir: null
+        name: cloudsql
+      - name: gcp-sa-token
+        secret:
+          secretName: user-gcp-sa-2c99mt7h78
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    component: metadata-server
+  name: metadata-deployment
+  namespace: kubeflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: metadata-server
+  template:
+    metadata:
+      labels:
+        component: metadata-server
+    spec:
+      containers:
+      - env:
+        - name: GRPC_PORT
+          value: "8080"
+        - name: METADATA_STORE_SERVER_CONFIG_FILE
+          value: /etc/config/mlmd_config.prototxt
+        image: gcr.io/tfx-oss-public/ml_metadata_store_server:0.14.0
+        name: container
+        ports:
+        - containerPort: 8080
+          name: md-backendapi
+        volumeMounts:
+        - mountPath: /etc/config
+          name: mlmd-server-config-volume
+      volumes:
+      - configMap:
+          name: mlmd-service-configmap
+        name: mlmd-server-config-volume
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    component: metadata-envoy
+  name: metadata-envoy
+  namespace: kubeflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: metadata-envoy
+  template:
+    metadata:
+      labels:
+        component: metadata-envoy
+    spec:
+      containers:
+      - image: gcr.io/ml-pipeline/envoy:initial
+        name: container
+        ports:
+        - containerPort: 9090
+          name: md-envoy
+        - containerPort: 9901
+          name: envoy-admin
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: minio
+  name: minio
+  namespace: kubeflow
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+      - args:
+        - gateway
+        - gcs
+        env:
+        - name: MINIO_ACCESS_KEY
+          value: minio
+        - name: MINIO_SECRET_KEY
+          value: minio123
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/credentials/application_default_credentials.json
+        image: gcr.io/ml-pipeline/minio:RELEASE.2019-08-14T20-37-41Z
+        name: minio
+        ports:
+        - containerPort: 9000
+        volumeMounts:
+        - mountPath: /etc/credentials
+          name: gcp-sa-token
+          readOnly: true
+      volumes:
+      - name: gcp-sa-token
+        secret:
+          secretName: user-gcp-sa-2c99mt7h78
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: ml-pipeline-persistenceagent
+  name: ml-pipeline-persistenceagent
+  namespace: kubeflow
+spec:
+  selector:
+    matchLabels:
+      app: ml-pipeline-persistenceagent
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline-persistenceagent
+    spec:
+      containers:
+      - env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        image: gcr.io/ml-pipeline/persistenceagent:0.1.27
+        imagePullPolicy: IfNotPresent
+        name: ml-pipeline-persistenceagent
+      serviceAccountName: ml-pipeline-persistenceagent
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: ml-pipeline-scheduledworkflow
+  name: ml-pipeline-scheduledworkflow
+  namespace: kubeflow
+spec:
+  selector:
+    matchLabels:
+      app: ml-pipeline-scheduledworkflow
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline-scheduledworkflow
+    spec:
+      containers:
+      - env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        image: gcr.io/ml-pipeline/scheduledworkflow:0.1.27
+        imagePullPolicy: IfNotPresent
+        name: ml-pipeline-scheduledworkflow
+      serviceAccountName: ml-pipeline-scheduledworkflow
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: ml-pipeline-ui
+  name: ml-pipeline-ui
+  namespace: kubeflow
+spec:
+  selector:
+    matchLabels:
+      app: ml-pipeline-ui
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline-ui
+    spec:
+      containers:
+      - env:
+        - name: MINIO_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        image: gcr.io/ml-pipeline/frontend:0.1.27
+        imagePullPolicy: IfNotPresent
+        name: ml-pipeline-ui
+        ports:
+        - containerPort: 3000
+      serviceAccountName: ml-pipeline-ui
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: ml-pipeline-viewer-crd
+  name: ml-pipeline-viewer-crd
+  namespace: kubeflow
+spec:
+  selector:
+    matchLabels:
+      app: ml-pipeline-viewer-crd
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline-viewer-crd
+    spec:
+      containers:
+      - env:
+        - name: MAX_NUM_VIEWERS
+          value: "50"
+        - name: MINIO_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        image: gcr.io/ml-pipeline/viewer-crd-controller:0.1.27
+        imagePullPolicy: Always
+        name: ml-pipeline-viewer-crd
+      serviceAccountName: ml-pipeline-viewer-crd-service-account
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: ml-pipeline-visualizationserver
+  name: ml-pipeline-visualizationserver
+  namespace: kubeflow
+spec:
+  selector:
+    matchLabels:
+      app: ml-pipeline-visualizationserver
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline-visualizationserver
+    spec:
+      containers:
+      - image: gcr.io/ml-pipeline/visualization-server:0.1.27
+        imagePullPolicy: IfNotPresent
+        name: ml-pipeline-visualizationserver
+        ports:
+        - containerPort: 8888
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: ml-pipeline
+  name: ml-pipeline
+  namespace: kubeflow
+spec:
+  selector:
+    matchLabels:
+      app: ml-pipeline
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline
+    spec:
+      containers:
+      - env:
+        - name: OBJECTSTORECONFIG_BUCKETNAME
+          value: kfp-sandbox
+        - name: DBCONFIG_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: DB_PASSWORD
+              name: mysql-credentials
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        image: gcr.io/ml-pipeline/api-server:0.1.27
+        imagePullPolicy: IfNotPresent
+        name: ml-pipeline-api-server
+        ports:
+        - containerPort: 8888
+        - containerPort: 8887
+      serviceAccountName: ml-pipeline
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: proxy-agent
+  name: proxy-agent
+  namespace: kubeflow
+spec:
+  selector:
+    matchLabels:
+      app: proxy-agent
+  template:
+    metadata:
+      labels:
+        app: proxy-agent
+    spec:
+      containers:
+      - image: gcr.io/ml-pipeline/inverse-proxy-agent:0.1.27
+        imagePullPolicy: IfNotPresent
+        name: proxy-agent
+      serviceAccountName: proxy-agent-runner
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: workflow-controller
+  name: workflow-controller
+  namespace: kubeflow
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: workflow-controller
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: workflow-controller
+    spec:
+      containers:
+      - args:
+        - --configmap
+        - workflow-controller-configmap
+        - --executor-image
+        - gcr.io/ml-pipeline/argoexec:v2.3.0
+        command:
+        - workflow-controller
+        env:
+        - name: ARGO_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        image: gcr.io/ml-pipeline/workflow-controller:v2.3.0
+        imagePullPolicy: IfNotPresent
+        name: workflow-controller
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: argo
+      serviceAccountName: argo
+      terminationGracePeriodSeconds: 30

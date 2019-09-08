@@ -14,7 +14,7 @@
 
 import kfp
 from kfp import gcp
-
+from use_mysql_secret import use_mysql_secret
 
 # Pipeline definition
 @kfp.dsl.pipeline(
@@ -43,6 +43,7 @@ def test_pipeline(
     ]
     for step in steps:
       step.apply(gcp.use_gcp_secret('user-gcp-sa-2c99mt7h78'))
+      step.apply(use_mysql_secret('mysql-credentials'))
       print("Applying steps")
 
 # Compile the pipelinea

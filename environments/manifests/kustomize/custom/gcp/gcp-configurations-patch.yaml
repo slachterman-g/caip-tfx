@@ -11,9 +11,12 @@ spec:
             - name: OBJECTSTORECONFIG_BUCKETNAME
               # Don't add gs:// prefix.
               # If bucket doesn't exist, the deployment will create one.
-              value: ''
+              value: 'kfp-sandbox'
             - name: DBCONFIG_PASSWORD
-              value: ''
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-credentials
+                  key: DB_PASSWORD
 ---
 apiVersion: apps/v1beta2
 kind: Deployment
@@ -27,4 +30,4 @@ spec:
           env:
             - name: CLOUD_SQL_INSTANCE_CONNECTION_NAME
               # E.g. project-id:us-central1:instance-name
-              value: ''
+              value: 'jk-demo1:us-central1:jksql2'
