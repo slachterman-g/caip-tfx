@@ -60,3 +60,4 @@ def test_pipeline(
 # Compile the pipelinea
 pipeline_filename = test_pipeline.__name__ + '.tar.gz'
 kfp.compiler.Compiler().compile(test_pipeline, pipeline_filename)
+kfp.Client().create_run_from_pipeline_package(pipeline_filename, {})
