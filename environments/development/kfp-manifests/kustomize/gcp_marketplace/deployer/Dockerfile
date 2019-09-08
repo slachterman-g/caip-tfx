@@ -1,1 +1,0 @@
-FROM gcr.io/ml-pipeline/marketplace-k8s-app-tools/k8s/deployer_helm/onbuild:0829-pr396
