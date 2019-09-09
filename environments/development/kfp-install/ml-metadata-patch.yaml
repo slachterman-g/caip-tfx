@@ -1,0 +1,18 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: metadata-deployment
+spec:
+  template:
+    spec:
+     volumes:
+      - name: mlmd-server-config-volume
+        secret:
+          secretName: mlmd-config
+        configMap: null
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlmd-service-configmap
+$patch: delete

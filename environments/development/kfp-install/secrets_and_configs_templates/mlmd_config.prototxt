@@ -1,0 +1,9 @@
+connection_config: <
+  mysql: <
+    host: "mysql"
+    port: 3306
+    database: "metadb"
+    user: "root"
+    password: ""
+  >
+>
