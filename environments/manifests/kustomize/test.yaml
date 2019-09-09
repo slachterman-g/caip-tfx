@@ -517,23 +517,7 @@ subjects:
   name: proxy-agent-runner
   namespace: kubeflow
 ---
-apiVersion: v1
-data:
-  mlmd_config.prototxt: |
-    connection_config: <
-      mysql: <
-        host: "mysql"
-        port: 3306
-        database: "metadb"
-        user: "root"
-        password: ""
-      >
-    >
-kind: ConfigMap
 metadata:
-  labels:
-    component: metadata-server
-  name: mlmd-service-configmap
   namespace: kubeflow
 ---
 apiVersion: v1
@@ -572,15 +556,6 @@ data:
 kind: Secret
 metadata:
   name: mlpipeline-minio-artifact
-  namespace: kubeflow
-type: Opaque
----
-apiVersion: v1
-data:
-  application_default_credentials.json: ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAiamstZGVtbzEiLAogICJwcml2YXRlX2tleV9pZCI6ICJkMjgyY2FjNmQ5NGQ3NjE5MWY2OWE5ODUwZjI0Y2I1ZDZjZjhmOTcyIiwKICAicHJpdmF0ZV9rZXkiOiAiLS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tXG5NSUlFdndJQkFEQU5CZ2txaGtpRzl3MEJBUUVGQUFTQ0JLa3dnZ1NsQWdFQUFvSUJBUUM4ZlM4b3ZGcnhNR1dHXG44YUNLN2VRM2tMU3VLeTJud0tUZnNrMk5namdFRkN2aldGcDRya2dNd3VpN0JwUG5pUHcvZ0g3WTlWdXVuTStjXG4zWGJHYUVOdnJNTkdDU252c1ZEdXNxODJYTGpXeTAvbUFORXhEVUJ0S0ticjRkVjg4YVVKcDFHQUdrL0U5U1hYXG4zdXNaSCtsOGczejNDcEpmUUlWWmZMNG9nQWFQakhBRkNnMDlwZm9CclRWTjE1TE84RFZ0bC9ZeXpLUGdOMlNOXG5iMVNpMkhHa2NIbVUzL2lmNWRMc3E0VldiV21MRzhhWDBiSkwrMlQ2dmVNYmc1MWJSbTdkcnlxNjU5UHFEV3FiXG5CRUc4UXQxZG5rOUZRUDU5TDFvSnVDeWxtTURpWGkyaEIrc3U4TjlpdGZGK3huS1VWaXZjWXZ0YlVvNDBIY1BEXG5vWE84WkJPSEFnTUJBQUVDZ2dFQU5Edld3VW10UkJCKzJpNEVxT3R5NW9rVjRQdzdPelV5RzRHc1p5NHllc0xpXG5SSzdiNTN5WW45eTFwUHFXSzBBMWN4MlhTV1Y1SWtMM2I4ZVpuak1QbVJkOXg5OUxQVTdjbUVGeE43WHJUUzdyXG5kZGc5SUlSRkdkcjlvdm1pOFd4L3FWU3lTN2MrNnR4cXY4OVpSRTJwSlNYRkVDcmdWRUFybEJoekZBTWlqazNKXG5qNUNqZGVTWTQyVmJsZ3dIc0xIV1hxcmp4TXN6WG50L09Tc0xNd2VlWFlZN3g3Wlk2Umoxb0h0T2Q5N2V5SStxXG5XZW1nZmsyZXNubzNTMjFTMFVGUmJRazl1c0o4a3Y4bEFpVmFSWlZQQ3U0THI1Y2lzeG5aMUFQWmxGZHIxenJBXG5hdHBjbFdmUEpzOUpvVk1GczMzSjdGS21XdTI5VkUvckpyU3pHdTFqYVFLQmdRRGJ2aDlUM25RM2lMQUZ3aFpFXG55NVI1Rkx6MW90c1pvb1RvRGc1cG04ZUtYdzBIU3FqN1hjT1gyOHBSOG5pUThKS1JTdXp4TVVSa1l2Mm1kamxNXG5RZzBmZlE4eDR1Znh0OUhmdUovQSsyL0tkMUF6SmtLUDQ4YTJzak9GZG9OekZaWEdGTVRKTi9Eb1YxMmFPTUhIXG5QaXB3c2N0OEEvQllCSTBkZS84Wk5jYzJ6d0tCZ1FEYmx1b2VIUjZtSG4ybHloc2tBdndDdExwWnJFd3NZNDl2XG5NRmpVT0RvL2FyU2dhMFI5eFNRM0RuaGlyQktVTkhuMU5MU2dMWHRUOUNTTHBLNjVkSS83ZDYwWGFRNU9UY2VYXG5QZ0tJRlh1Q1hZK2NkZ0pza08zdmZ2Mm1VSGdRTDI0KytNZ1FSVnBFeGc3cXY2MHcwTzVOazg3NXpkdHEycFhXXG5XRGFBckpnRnlRS0JnUURKNURzNlBsZCtzbm92UUN4ZmxyL2FJMENkV3J4OUtBRitoM09jZWtEeUUvU1BiM3drXG5QdmkyN0h4Tm9ENC94SmlWSDBibEwwUE1DOXRLZHJLY0tzK056OFFITEplNFVSQmx3V1lkMDZYWldwZjM5cjRQXG5IOUp5QnZZcE9FTDdtS2hjTHJiQ3ZULzg2RkFhb3V6L0YxRzg2czJ2S3B0Rzh4K0lLR1d2anVaeXB3S0JnUUNRXG5Uc3hLdi81TlUwcGxjcjJGWEFTN3pvT012T05PWkp0MWljTkdyRER6VGkrb0lQWmc1UGJZeThTbnE4ZUY2RHFoXG52MkpZeGFyLzBEbFlJQURIVmVmdGJZZXVFOWRYOUZ1UGRDdjd2SXB2Y1FjWTNxRFhNaU43dWV2OXFYSk55SzNkXG42bWFuOHJ2UTZJd1RENlpFcDNtRU4vZlVTTW5DbmlYTU9DcVJRMXVncVFLQmdRREVRSDg0TmpqdUo5VmtFUWljXG4rRUd1MkU5ekZFelg0Y2lEbDVIejBUTUhvd3ZZYmI2Q3dyWE11NW1aSndFelFoMHN4RkNDNnozZDdzdWRtM1A1XG5jK0tUb2swNlFlbnVSY1Fxc2dTYTA2S0Q2ODYyVnQreDM3S2g4cVZzcHdpMFAzR3pSa1BybVNzejhvYzlzajNBXG52V3haeDlJTGp0NHN6aU1kQkNkTVJxOUVJUT09XG4tLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tXG4iLAogICJjbGllbnRfZW1haWwiOiAia2ZwLXNhQGprLWRlbW8xLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwKICAiY2xpZW50X2lkIjogIjExMzc5MDUxNTQ0NTEyNDQzNzY0NiIsCiAgImF1dGhfdXJpIjogImh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbS9vL29hdXRoMi9hdXRoIiwKICAidG9rZW5fdXJpIjogImh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwKICAiYXV0aF9wcm92aWRlcl94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL29hdXRoMi92MS9jZXJ0cyIsCiAgImNsaWVudF94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL3JvYm90L3YxL21ldGFkYXRhL3g1MDkva2ZwLXNhJTQwamstZGVtbzEuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iCn0K
-kind: Secret
-metadata:
-  name: user-gcp-sa-2c99mt7h78
   namespace: kubeflow
 type: Opaque
 ---
@@ -734,7 +709,7 @@ spec:
         name: cloudsql
       - name: gcp-sa-token
         secret:
-          secretName: user-gcp-sa-2c99mt7h78
+          secretName: user-gcp-sa
 ---
 apiVersion: apps/v1beta2
 kind: Deployment
@@ -768,9 +743,9 @@ spec:
         - mountPath: /etc/config
           name: mlmd-server-config-volume
       volumes:
-      - configMap:
-          name: mlmd-service-configmap
-        name: mlmd-server-config-volume
+      - name: mlmd-server-config-volume
+        secret:
+          name: mlmd-config
 ---
 apiVersion: apps/v1beta2
 kind: Deployment
@@ -838,7 +813,7 @@ spec:
       volumes:
       - name: gcp-sa-token
         secret:
-          secretName: user-gcp-sa-2c99mt7h78
+          secretName: user-gcp-sa
 ---
 apiVersion: apps/v1beta2
 kind: Deployment

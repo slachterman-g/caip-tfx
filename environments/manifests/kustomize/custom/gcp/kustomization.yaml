@@ -18,9 +18,9 @@ images:
   - name: gcr.io/ml-pipeline/minio
     newTag: RELEASE.2019-08-14T20-37-41Z
 
-secretGenerator:
-  - name: user-gcp-sa
-    files:
-      # Create a service account key and stored as application_default_credentials.json in the same folder.
-      # https://cloud.google.com/iam/docs/creating-managing-service-account-keys#creating_service_account_keys
-      - application_default_credentials.json
+#secretGenerator:
+#  - name: user-gcp-sa
+#    files:
+#      # Create a service account key and stored as application_default_credentials.json in the same folder.
+#      # https://cloud.google.com/iam/docs/creating-managing-service-account-keys#creating_service_account_keys
+#      - application_default_credentials.json
