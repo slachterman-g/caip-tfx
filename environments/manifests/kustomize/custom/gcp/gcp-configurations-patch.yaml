@@ -43,11 +43,11 @@ spec:
      volumes:
       - name: mlmd-server-config-volume
         secret:
-          name: mlmd-config
+          secretName: mlmd-config
         configMap: null
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mlmd-service-configmap
-$patch: delete
+#---
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: mlmd-service-configmap
+#$patch: delete

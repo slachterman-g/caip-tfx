@@ -517,7 +517,23 @@ subjects:
   name: proxy-agent-runner
   namespace: kubeflow
 ---
+apiVersion: v1
+data:
+  mlmd_config.prototxt: |
+    connection_config: <
+      mysql: <
+        host: "mysql"
+        port: 3306
+        database: "metadb"
+        user: "root"
+        password: ""
+      >
+    >
+kind: ConfigMap
 metadata:
+  labels:
+    component: metadata-server
+  name: mlmd-service-configmap
   namespace: kubeflow
 ---
 apiVersion: v1
@@ -745,7 +761,7 @@ spec:
       volumes:
       - name: mlmd-server-config-volume
         secret:
-          name: mlmd-config
+          secretName: mlmd-config
 ---
 apiVersion: apps/v1beta2
 kind: Deployment
