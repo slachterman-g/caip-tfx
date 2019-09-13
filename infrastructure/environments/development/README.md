@@ -50,15 +50,16 @@ In the reference configuration, KFP utilizes external MySQL instance and object 
 
 The connection settings can be set before the KFP installation or as a part of the installation process. To minimize security exposure, it may be easier to configure them as a separate step before the installation. If you prefer to fully automate the installation process, including configuration of secrets you can utilize **Kustomize** secret and config map generators as demonstrated in the `kustomization_generators.yaml` template.
 
-To configure connections settings before the installation:
+To configure connection settings before the installation:
 
-1. Use Cloud Console or the `gcloud` command to configure the `root` user in the MySQL instance. The instance created by the Terraform configuration has a root user removed.
+1. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance. The instance created by the Terraform configuration has the root user removed.
 1. Use Cloud Console or the `gcloud` command to create and download the JSON type private key for the KFP service user.
 1. Create the Kubernetes namespace for the KFP services.
 1. In the KFP namespace, create 
-   - The `user-gcp-sa` secret to store the KFP service's private key. The JSON key file should be stored under the `applicaton_default_credentials.json` key.
+   - The `user-gcp-sa` secret to store the KFP service's private key. The content of the key file should be stored under the `applicaton_default_credentials.json` key.
    - The `cloudsql-config` secret. The secret should have three keys: DB_USERNAME, DB_PASSWORD, CONNECTION_NAME. The format of CONNECTION_NAME must be `project_id:region:mysql_instance_name`.
-   - The `mlmd-config` secret. The secrete should have one key: `mlmd_config.prototxt`. The content of the key should be in the format demonstrated by the `kustomize\secrets_and_configs_templates\mlmd_config.prototxt` template.
+   - The `mlmd-config` secret. The secret should have one key: `mlmd_config.prototxt`. The content of the key should be in the format demonstrated by the `kustomize\secrets_and_configs_templates\mlmd_config.prototxt` template.
+   - The `objectstore-config` 
   
 1. 
 
