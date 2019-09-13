@@ -57,7 +57,7 @@ To configure connection settings:
 1. Create the Kubernetes namespace for the KFP services.
 1. In the KFP namespace, create 
    - The `user-gcp-sa` secret to store the KFP service's private key. The content of the key file should be stored under the `applicaton_default_credentials.json` key.
-   - The `mlpipelines-config` secret. The secret should have three keys: DB_USERNAME, DB_PASSWORD, DB_CONNECTION_NAME and, OBJECTSTORE_BUCKET_NAME. The format of DB_CONNECTION_NAME must be `project_id:region:mysql_instance_name`. The name of the GCS bucket for the object store must not include the `gs://` prefix.
+   - The `mlpipelines-config` secret. The secret should have four keys: DB_USERNAME, DB_PASSWORD, DB_CONNECTION_NAME and, OBJECTSTORE_BUCKET_NAME. The format of DB_CONNECTION_NAME must be `project_id:region:mysql_instance_name`. The name of the GCS bucket for the object store must not include the `gs://` prefix.
    - The `mlmd-config` secret. The secret should have one key: `mlmd_config.prototxt`. The content of the key should be in the format demonstrated by the `kustomize\secrets_and_configs_templates\mlmd_config.prototxt` template.
   
 
