@@ -64,6 +64,7 @@ To configure connection settings:
 
 To install KFP pipelines:
 1. Make sure tha you have the latest version of `gcloud` and `kubectl` installed. Although, the latest versions of `kubectl` support **Kustomize** natively, it is recommended to install `kustomize` as a separate binary as it includes the latest updates that may have not yet made it to `kubectl`.
+1. Update the `kustomize/kustomization.yaml` with the name of the namespace you created in the previous step.
 1. From the `kustomize` folder:
 ```
 gcloud container get-credentials [YOUR_CLUSTER_NAME] --zone [YOUR_CLUSTER_ZONE]
