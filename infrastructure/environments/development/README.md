@@ -8,8 +8,10 @@ To deploy the environment:
 
 ## Provisioning the environment's infrastructure
 The Terraform configuration utilizes the module from
-https://github.com/jarokaz/terraform-gcp-kfp
+https://github.com/jarokaz/terraform-gcp-kfp.
 Refer to the module's documentation for more information.
+
+To provision infrastructure:
 
 1. Update `terraform/backend.tf` to point to the GCS bucket for Terraform state management
 2. Update `terraform/terraform.tfvars` with your *Project ID*, *Region*, and *Name Prefix*. 
