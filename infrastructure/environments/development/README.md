@@ -30,11 +30,15 @@ terraform init
 terraform apply
 ```
 
+## Creating database users and service account credentials
+For security reasons the Cloud SQL instance was created without databases users and a private key was not created for the KFP service account. Currently, KFP uses the MySQL `root` user to configure ML Metadata databases.
+
+1. Using Cloud Console or the `gcloud` command create the MySQL `'root'@'%'` user. Do not use an empty password.
+2. Create and d
 
 ## Deploying KFP pipelines
 
-For security reasons the Cloud SQL instance was created without databases users and the private keys were not created for the service accounts.
+
 
 To deploy KFP pipelines:
-1. Create the `root` user in the CloudSQL instance created in the previous step. 
-2. Create and d
+
