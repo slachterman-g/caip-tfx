@@ -59,7 +59,9 @@ To configure connection settings:
    - The `user-gcp-sa` secret to store the KFP service's private key. The content of the key file should be stored under the `applicaton_default_credentials.json` key.
    - The `mlpipelines-config` secret. The secret should have four keys: DB_USERNAME, DB_PASSWORD, DB_CONNECTION_NAME and, OBJECTSTORE_BUCKET_NAME. The format of DB_CONNECTION_NAME must be `project_id:region:mysql_instance_name`. The name of the GCS bucket for the object store must not include the `gs://` prefix.
    - The `mlmd-config` secret. The secret should have one key: `mlmd_config.prototxt`. The content of the key should be in the format demonstrated by the `kustomize\secrets_and_configs_templates\mlmd_config.prototxt` template.
-  
+ 
+### Installing Kubeflow Pipelines
+
 To install KFP pipelines:
 1. Make sure tha you have the latest version of `gcloud` and `kubectl` installed. Although, the latest versions of `kubectl` support **Kustomize** natively, it is recommended to install `kustomize` as a separate binary as it includes the latest updates that may have not yet made it to `kubectl`.
 1. From the `kustomize` folder:
