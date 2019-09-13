@@ -31,7 +31,7 @@ terraform apply
 ```
 
 ## Creating database users and service account credentials
-For security reasons the Terraform configuration did not create any security resources. In this step, you manually create the required database users and service account credentials.
+For security reasons the Terraform configuration did not create any security resources. In this step, you manually create the required database users and service account credentials and configure them as Kubernetes secrets.
 
 1. Using Cloud Console or the `gcloud` command create the MySQL `'root'@'%'` user. Do not use an empty password.
 1. Using Cloud Console or the `gcloud` command create and download the JSON type private key for the KFP service account.
