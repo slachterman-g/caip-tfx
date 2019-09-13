@@ -1,6 +1,20 @@
 # Development Environment deployment configurations.
 
-This folder contains a Terraform configuration for a reference Development Environment.
+This folder contains deployment configurations for a reference Development Environment.
 
-The configuration utilizes the *MVP GPC Infrastructure for KFP module* from [](https://github.com/jarokaz/terraform-gcp-kfp)
+To deploy the environment:
+1. Provision infrastructure using **Terraform**
+2. Deploy KFP pipelines using **Kustomize**
+
+## Provisioning the environment's infrastructure
+1. Update `terraform/backend.tf` to point to the GCS bucket for Terraform state management
+2. Update `terraform/terraform.tfvars` with your *Project ID*, *Region*, and *Name Prefix*. Refer to [](https://github.com/jarokaz/terraform-gcp-kfp) for more info
+3. Execute the updated configuration
+```
+cd terraform
+terraform init
+terraform apply
+```
+
+## Deploying KFP pipelines
 
