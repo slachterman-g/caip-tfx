@@ -16,3 +16,19 @@ patchesStrategicMerge:
   - ml-pipeline-patch.yaml
   - ml-metadata-patch.yaml
 
+secretGenerator:
+  - name: user-gcp-sa
+    files: 
+      - secrets_and_configs/application_default_credentials.json
+    type: Opaque
+  - name: cloudsql-config
+    env: secrets_and_configs/cloudsql_config.txt
+    type: Opaque
+  - name: mlmd-config
+    files:
+      - secrets_and_configs/mlmd_config.prototxt
+    type: Opaque
+
+configMapGenerator:
+  - name: objectstore-config
+    env: secrets_and_configs/objectstore_config.txt
