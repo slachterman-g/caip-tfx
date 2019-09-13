@@ -44,9 +44,9 @@ terraform apply
 
 ### Configuring connections settings to Cloud SQL and Cloud Storage
 
-In the reference configuration, KFP utilizes external MySQL instance and object storage. The KFP services are designed to read the connection settings (including credentials)  from a set of Kubernetes Secrets and Config Maps. 
+In the reference configuration, KFP utilizes external MySQL instance and object storage. The KFP services are designed to read the connection settings (including credentials)  from a set of Kubernetes Secrets. 
 
-*NOTE: In the current release of KFP, the connection settings are repeated in multiple secrets and maps. The more consistent connection settings management will be introduced in future releases.*
+*NOTE: In the current release of KFP, the connection settings are repeated in multiple secrets. The more consistent connection settings management will be introduced in future releases.*
 
 The connection settings can be set before the KFP installation or as a part of the installation process. To minimize security exposure, it may be easier to configure them as a separate step before the installation. 
 
