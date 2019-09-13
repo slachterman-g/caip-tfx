@@ -4,6 +4,7 @@ This folder contains deployment configurations for a reference Development Envir
 
 To deploy the environment:
 1. Provision infrastructure using **Terraform**
+1. Create database users and service account credentials
 2. Deploy KFP pipelines using **Kustomize**
 
 ## Provisioning the environment's infrastructure
