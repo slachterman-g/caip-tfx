@@ -71,3 +71,10 @@ gcloud container get-credentials [YOUR_CLUSTER_NAME] --zone [YOUR_CLUSTER_ZONE]
 kustomize build kustomize | kubectl apply -f -
 ```
 
+## Accessing KFP UI
+
+After the installation completes, you can access the KFP UI from the following URL. You may need to wait a few minutes before the URL is operational.
+
+```
+echo "https://"$(kubectl describe configmap inverse-proxy-config -n kubeflow | grep "googleusercontent.com")
+```
