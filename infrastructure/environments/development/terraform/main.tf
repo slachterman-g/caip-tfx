@@ -6,5 +6,6 @@ module "dev_infrastructure" {
   source      = "github.com/jarokaz/terraform-gcp-kfp"
   project_id  = var.project_id
   region      = var.region
+  zone        = var.zone
   name_prefix = var.name_prefix
 }

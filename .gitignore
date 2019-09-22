@@ -105,7 +105,9 @@ venv.bak/
 *.tar.gz
 
 application_default_credentials.json
-secrets_and_configs
+mysql-credential.env
+gcs-config.env
+
 test.yaml
 .terraform
 

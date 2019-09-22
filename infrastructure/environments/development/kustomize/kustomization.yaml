@@ -1,7 +1,7 @@
 resources:
-  - github.com/kubeflow/pipelines//manifests/kustomize/namespaced/?ref=0.1.29
-  - github.com/kubeflow/pipelines//manifests/kustomize/env/gcp/minio/?ref=0.1.29
-  - github.com/kubeflow/pipelines//manifests/kustomize/env/gcp/mysql/?ref=0.1.29
+  - github.com/kubeflow/pipelines//manifests/kustomize/namespaced/?ref=master
+  - github.com/kubeflow/pipelines//manifests/kustomize/env/gcp/minio/?ref=master
+  - github.com/kubeflow/pipelines//manifests/kustomize/env/gcp/mysql/?ref=master
 
 namespace: kubeflow
 
@@ -14,5 +14,14 @@ images:
 patchesStrategicMerge:
   - cloudsqlproxy-patch.yaml
   - ml-pipeline-patch.yaml
-  - ml-metadata-patch.yaml
 
+secretGenerator:
+  - name: user-gcp-sa
+    files:
+      - application_default_credentials.json
+  - name: mysql-credential
+    env: mysql-credential.env
+
+configMapGenerator:
+  - name: gcs-configs
+    env: gcs-configs.env

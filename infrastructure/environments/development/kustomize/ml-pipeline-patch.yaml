@@ -11,10 +11,10 @@ spec:
             - name: OBJECTSTORECONFIG_BUCKETNAME
               valueFrom: 
                 configMapKeyRef:
-                  name: objectstore-config
-                  key: BUCKET_NAME
+                  name: gcp-configs
+                  key: bucket_name
             - name: DBCONFIG_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: cloudsql-config
-                  key: DB_PASSWORD
+                  name: mysql-credential
+                  key: password

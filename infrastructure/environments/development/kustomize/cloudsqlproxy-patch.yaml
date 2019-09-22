@@ -10,6 +10,6 @@ spec:
           env:
             - name: CLOUD_SQL_INSTANCE_CONNECTION_NAME
               valueFrom: 
-                secretKeyRef:
-                  name: cloudsql-config
-                  key: CONNECTION_NAME
+                configMapKeyRef:
+                  name: gcp-configs
+                  key: connection_name
