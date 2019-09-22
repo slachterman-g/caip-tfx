@@ -1,15 +1,24 @@
 # Development Environment deployment configurations.
 
-This folder contains deployment configurations for a reference Development Environment.
+This folder contains deployment configurations for a reference Development Environment. The core services in the environment include:
+- AI Platform Notebooks
+- AI Platform Training
+- AI Platform Prediction
+- Kubeflow Pipelines (KFP)
 
-To deploy the environment:
-1. Provision infrastructure using **Terraform**
-1. Create database users and service account credentials
-2. Deploy KFP pipelines using **Kustomize**
+Currently, Kubeflow Pipelines is not available as a managed service. In the reference environment, the KFP services are deployed to a dedicated GKE cluster and configured to utilize:
+- A Cloud SQL managed MySQL for ML Metadata and KFP Metadata databases
+- A Cloud Storage bucket for object storage
 
-## Provisioning the environment's infrastructure
+To configure the environment:
+1. Enable the required Cloud Services
+1. Provision infrastructure for Kubeflow Pipelines
+1. Deploy KFP pipelines 
+
+## Provisioning the Kubeflow Pipelines infrastructure
 
 The MVP infrastructure to support a lightweight deployment of Kubeflow Pipelines can be created using the Terraform configuration in the `terraform` folder. The configuration provisions the following services:
+- A VPC to host GKE cluster
 - A GKE cluster to host KFP services
 - A Cloud SQL managed MySQL instance to host KFP and ML Metadata databases
 - A Cloud Storage bucket to host artifact repository
@@ -30,12 +39,42 @@ terraform init
 terraform apply
 ```
 
-## Creating database users and service account credentials
-For security reasons the Terraform configuration did not create any security resources. In this step, you manually create the required database users and service account credentials.
-
-1. Using Cloud Console or the `gcloud` command create the MySQL `'root'@'%'` user. Do not use an empty password.
-1. Using Cloud Console or the `gcloud` command create and download the JSON type private key for the KFP service account.
 
 ## Deploying KFP pipelines
 
+### Configuring connections settings to Cloud SQL and Cloud Storage
 
+In the reference configuration, KFP utilizes external MySQL instance and object storage. The KFP services are designed to read the connection settings (including credentials)  from a set of Kubernetes Secrets. 
+
+*NOTE: In the current release of KFP, the connection settings are repeated in multiple secrets. The more consistent connection settings management will be introduced in future releases.*
+
+The connection settings can be set before the KFP installation or as a part of the installation process. To minimize security exposure, it may be easier to configure them as a separate step before the installation. 
+
+To configure connection settings:
+
+1. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance. The instance created by the Terraform configuration has the root user removed.
+1. Use Cloud Console or the `gcloud` command to create and download the JSON type private key for the KFP service user.
+1. Create the Kubernetes namespace for the KFP services.
+1. In the KFP namespace, create 
+   - The `user-gcp-sa` secret to store the KFP service's private key. The content of the key file should be stored under the `applicaton_default_credentials.json` key.
+   - The `mlpipelines-config` secret. The secret should have four keys: DB_USERNAME, DB_PASSWORD, DB_CONNECTION_NAME and, OBJECTSTORE_BUCKET_NAME. The format of DB_CONNECTION_NAME must be `project_id:region:mysql_instance_name`. The name of the GCS bucket for the object store must not include the `gs://` prefix.
+   - The `mlmd-config` secret. The secret should have one key: `mlmd_config.prototxt`. The content of the key should be in the format demonstrated by the `kustomize\secrets_and_configs_templates\mlmd_config.prototxt` template.
+ 
+### Installing Kubeflow Pipelines
+
+To install KFP pipelines:
+1. Make sure tha you have the latest version of `gcloud` and `kubectl` installed. Although, the latest versions of `kubectl` support **Kustomize** natively, it is recommended to install `kustomize` as a separate binary as it includes the latest updates that may have not yet made it to `kubectl`.
+1. Update the `kustomize/kustomization.yaml` with the name of the namespace you created in the previous step.
+1. Configure GKE credentials and apply the manifests:
+```
+gcloud container get-credentials [YOUR_CLUSTER_NAME] --zone [YOUR_CLUSTER_ZONE]
+kustomize build kustomize | kubectl apply -f -
+```
+
+## Accessing KFP UI
+
+After the installation completes, you can access the KFP UI from the following URL. You may need to wait a few minutes before the URL is operational.
+
+```
+echo "https://"$(kubectl describe configmap inverse-proxy-config -n kubeflow | grep "googleusercontent.com")
+```
