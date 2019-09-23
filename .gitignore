@@ -106,7 +106,7 @@ venv.bak/
 
 application_default_credentials.json
 mysql-credential.env
-gcs-config.env
+gcp-configs.env
 
 test.yaml
 .terraform

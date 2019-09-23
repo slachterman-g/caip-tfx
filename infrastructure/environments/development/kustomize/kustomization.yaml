@@ -21,7 +21,8 @@ secretGenerator:
       - application_default_credentials.json
   - name: mysql-credential
     env: mysql-credential.env
+    behavior: replace
 
 configMapGenerator:
-  - name: gcs-configs
-    env: gcs-configs.env
+  - name: gcp-configs
+    env: gcp-configs.env
