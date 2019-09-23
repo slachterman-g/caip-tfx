@@ -246,11 +246,10 @@ def _create_pipeline(
 
 
 if __name__ == '__main__':
-  # Metadata config. The defaults works work with the installation of
-  # KF Pipelines using Kubeflow. If installing KF Pipelines using the
-  # lightweight deployment option, you may need to override the defaults.
-  # metadata_config = kubeflow_dag_runner.get_default_kubeflow_metadata_config()
-
+  
+  # Configure TFX components to get connection information for Cloud SQL hosted 
+  # MySQL from environment variables.
+   
   config = kubeflow_pb2.KubeflowMetadataConfig()
   config.mysql_db_service_host.environment_variable = 'MYSQL_SERVICE_HOST'
   config.mysql_db_service_port.environment_variable = 'MYSQL_SERVICE_PORT'
@@ -260,13 +259,16 @@ if __name__ == '__main__':
 
   metadata_config = config
 
+  # Configure the runtime environment for the TFX component.
+  # use_mysql_secret is a utility function that sets MYSQL_USERNAME
+  # and MYSQL_PASSWORD environment variables with values from the Kubernetes
+  # mysql-credentials secret
+
   operator_funcs = [gcp.use_gcp_secret('user-gcp-sa'), use_mysql_secret('mysql-credential')]
 
   runner_config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
       kubeflow_metadata_config=metadata_config,
       pipeline_operator_funcs=operator_funcs
-      # Specify custom docker image to use.
-      # tfx_image='...'
   )
 
   kubeflow_dag_runner.KubeflowDagRunner(config=runner_config).run(

@@ -44,27 +44,21 @@ terraform apply
 
 ### Configuring connections settings to Cloud SQL and Cloud Storage
 
-In the reference configuration, KFP utilizes external MySQL instance and object storage. The KFP services are designed to read the connection settings (including credentials)  from a set of Kubernetes Secrets. 
-
-*NOTE: In the current release of KFP, the connection settings are repeated in multiple secrets. The more consistent connection settings management will be introduced in future releases.*
-
-The connection settings can be set before the KFP installation or as a part of the installation process. To minimize security exposure, it may be easier to configure them as a separate step before the installation. 
+In the reference configuration, KFP utilizes external MySQL instance and object storage. The KFP services are designed to read the connection settings (including credentials)  from Kubernetes Secrets and ConfigMaps. 
 
 To configure connection settings:
 
+1. Navigate to the `kustomize` folder.
 1. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance. The instance created by the Terraform configuration has the root user removed.
-1. Use Cloud Console or the `gcloud` command to create and download the JSON type private key for the KFP service user.
-1. Create the Kubernetes namespace for the KFP services.
-1. In the KFP namespace, create 
-   - The `user-gcp-sa` secret to store the KFP service's private key. The content of the key file should be stored under the `applicaton_default_credentials.json` key.
-   - The `mlpipelines-config` secret. The secret should have four keys: DB_USERNAME, DB_PASSWORD, DB_CONNECTION_NAME and, OBJECTSTORE_BUCKET_NAME. The format of DB_CONNECTION_NAME must be `project_id:region:mysql_instance_name`. The name of the GCS bucket for the object store must not include the `gs://` prefix.
-   - The `mlmd-config` secret. The secret should have one key: `mlmd_config.prototxt`. The content of the key should be in the format demonstrated by the `kustomize\secrets_and_configs_templates\mlmd_config.prototxt` template.
+1. Use Cloud Console or the `gcloud` command to create and download the JSON type private key for the KFP service user. Rename the file to `application_default_credentials.json`
+1. Rename `gcp-configs.env.template` and `mysql-credential.env.template` to `gcp-configs.env` and `mysql-credential.env`. Replace the placeholders in the files with your configs.
+**Note that mysql-credential.env and application_default_credentials.json contain sensitive information. Remeber to remove or secure the files after the installation process completes.**
  
 ### Installing Kubeflow Pipelines
 
 To install KFP pipelines:
-1. Make sure tha you have the latest version of `gcloud` and `kubectl` installed. Although, the latest versions of `kubectl` support **Kustomize** natively, it is recommended to install `kustomize` as a separate binary as it includes the latest updates that may have not yet made it to `kubectl`.
-1. Update the `kustomize/kustomization.yaml` with the name of the namespace you created in the previous step.
+1. Make sure that you have the latest version of `gcloud` and `kubectl` installed. Although, the latest versions of `kubectl` support **Kustomize** natively, it is recommended to install `kustomize` as a separate binary as it includes the latest updates that may have not yet made it to `kubectl`.
+1. Update the `kustomize/kustomization.yaml` with the name the namespace if you want to change the default name.
 1. Configure GKE credentials and apply the manifests:
 ```
 gcloud container get-credentials [YOUR_CLUSTER_NAME] --zone [YOUR_CLUSTER_ZONE]
