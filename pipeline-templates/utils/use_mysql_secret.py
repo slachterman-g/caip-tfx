@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def use_mysql_secret(secret_name='mysql-credentials', db_username='DB_USERNAME', db_password='DB_PASSWORD'):
+def use_mysql_secret(secret_name='mysql-credential', db_username='username', db_password='password'):
     """An operator that configures the container to inject env variables with mysql credentials.
         ---
         apiVersion: v1

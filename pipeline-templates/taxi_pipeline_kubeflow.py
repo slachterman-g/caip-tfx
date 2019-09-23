@@ -260,7 +260,7 @@ if __name__ == '__main__':
 
   metadata_config = config
 
-  operator_funcs = [gcp.use_gcp_secret('user-gcp-sa-2c99mt7h78'), use_mysql_secret('mysql-credentials')]
+  operator_funcs = [gcp.use_gcp_secret('user-gcp-sa'), use_mysql_secret('mysql-credential')]
 
   runner_config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
       kubeflow_metadata_config=metadata_config,
