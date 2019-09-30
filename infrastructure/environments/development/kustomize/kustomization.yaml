@@ -14,14 +14,8 @@ images:
 patchesStrategicMerge:
   - cloudsqlproxy-patch.yaml
   - ml-pipeline-patch.yaml
+  - mysql-secret-patch.yaml
 
-secretGenerator:
-  - name: user-gcp-sa
-    files:
-      - application_default_credentials.json
-  - name: mysql-credential
-    env: mysql-credential.env
-    behavior: replace
 
 configMapGenerator:
   - name: gcp-configs
