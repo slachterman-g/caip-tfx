@@ -18,6 +18,8 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import yaml
+
 from typing import Dict, List, Text
 from tfx.components.base import executor_spec
 from tfx.components.evaluator.component import Evaluator
@@ -36,36 +38,33 @@ from tfx.proto import pusher_pb2
 from tfx.proto import trainer_pb2
 
 from tfx.orchestration.kubeflow.proto import kubeflow_pb2
+from tfx.extensions.google_cloud_ai_platform.trainer import executor as ai_platform_trainer_executor  # pylint: disable=g-import-not-at-top
+from tfx.extensions.google_cloud_ai_platform.pusher import executor as ai_platform_pusher_executor  # pylint: disable=g-import-not-at-top
 
 from utils import use_mysql_secret
 from kfp import gcp
+SETTINGS_FILE = 'settings.yaml'
 
-_pipeline_name = 'chicago_taxi_pipeline_kubeflow'
+# Load configuration settings
+settings = yaml.safe_load(pathlib.Path(SETTINGS_FILE).read_text())
+_pipeline_name = settings['pipeline']['name']
+_project_id = settings['environment']['project_id']
+_gcp_region = settings['envionment']['region']
+_pipeline_root = '{}/{}'.format(settings['environment']['artifact_store_root'], _pipeline_name)
+_trainer_module = '{}/{}/{}'.format(settings['environment']['artifact_store_root'], 
+                                    settings['environment']['modules_folder'],
+                                    settings['trainer']['train_module'])
+
 
 # Directory and data locations (uses Google Cloud Storage).
-_input_bucket = 'gs://caip-tfx'
-_output_bucket = 'gs://caip-tfx'
-_tfx_root = os.path.join(_output_bucket, 'tfx')
-_pipeline_root = os.path.join(_tfx_root, _pipeline_name)
+# _input_bucket = 'gs://caip-tfx'
+# _output_bucket = 'gs://caip-tfx'
+# _tfx_root = os.path.join(_output_bucket, 'tfx')
+# _pipeline_root = os.path.join(_tfx_root, _pipeline_name)
 
-# Google Cloud Platform project id to use when deploying this pipeline.
-_project_id = 'jk-demo1'
-
-# Python module file to inject customized logic into the TFX components. The
-# Transform and Trainer both require user-defined functions to run successfully.
-# Copy this from the current directory to a GCS bucket and update the location
-# below.
-_module_file = os.path.join(_input_bucket, 'taxi_utils.py')
-
-# Path which can be listened to by the model server.  Pusher will output the
 # trained model here.
-_serving_model_dir = os.path.join(_output_bucket, 'serving_model',
-                                  _pipeline_name)
-
-# Region to use for Dataflow jobs and AI Platform training jobs.
-#   Dataflow: https://cloud.google.com/dataflow/docs/concepts/regional-endpoints
-#   AI Platform: https://cloud.google.com/ml-engine/docs/tensorflow/regions
-_gcp_region = 'us-central1'
+# _serving_model_dir = os.path.join(_output_bucket, 'serving_model',
+#                                  _pipeline_name)
 
 # A dict which contains the training job parameters to be passed to Google
 # Cloud AI Platform. For the full set of parameters supported by Google Cloud AI
@@ -93,17 +92,16 @@ _ai_platform_serving_args = {
     # Starting from TFX 0.14, 'runtime_version' is not relevant anymore.
     # Instead, it will be populated by TFX as <major>.<minor> version of
     # the imported TensorFlow package;
-    'runtime_version': '1.13',
 }
 
 # Beam args to run data processing on DataflowRunner.
-_beam_pipeline_args = [
-    '--runner=DataflowRunner',
-    '--experiments=shuffle_mode=auto',
-    '--project=' + _project_id,
-    '--temp_location=' + os.path.join(_output_bucket, 'tmp'),
-    '--region=' + _gcp_region,
-]
+# _beam_pipeline_args = [
+#    '--runner=DataflowRunner',
+#    '--experiments=shuffle_mode=auto',
+#    '--project=' + _project_id,
+#    '--temp_location=' + os.path.join(_output_bucket, 'tmp'),
+#    '--region=' + _gcp_region,
+#]
 
 # The rate at which to sample rows from the Chicago Taxi dataset using BigQuery.
 # The full taxi dataset is > 120M record.  In the interest of resource
@@ -166,77 +164,61 @@ def _create_pipeline(
       stats=statistics_gen.outputs.output, schema=infer_schema.outputs.output)
 
   # Performs transformations and feature engineering in training and serving.
-  transform = Transform(
-      input_data=example_gen.outputs.examples,
-      schema=infer_schema.outputs.output,
-      module_file=module_file)
+  #transform = Transform(
+  #    input_data=example_gen.outputs.examples,
+  #    schema=infer_schema.outputs.output,
+  #    module_file=module_file)
 
   # Uses user-provided Python function that implements a model using TF-Learn
   # to train a model on Google Cloud AI Platform.
-  try:
-    from tfx.extensions.google_cloud_ai_platform.trainer import executor as ai_platform_trainer_executor  # pylint: disable=g-import-not-at-top
-    # Train using a custom executor. This requires TFX >= 0.14.
-    trainer = Trainer(
-        custom_executor_spec=executor_spec.ExecutorClassSpec(
-            ai_platform_trainer_executor.Executor),
-        module_file=module_file,
-        transformed_examples=transform.outputs.transformed_examples,
-        schema=infer_schema.outputs.output,
-        transform_output=transform.outputs.transform_output,
-        train_args=trainer_pb2.TrainArgs(num_steps=10000),
-        eval_args=trainer_pb2.EvalArgs(num_steps=5000),
-        custom_config={'ai_platform_training_args': ai_platform_training_args})
-  except ImportError:
-    # Train using a deprecated flag.
-    trainer = Trainer(
-        module_file=module_file,
-        transformed_examples=transform.outputs.transformed_examples,
-        schema=infer_schema.outputs.output,
-        transform_output=transform.outputs.transform_output,
-        train_args=trainer_pb2.TrainArgs(num_steps=10000),
-        eval_args=trainer_pb2.EvalArgs(num_steps=5000),
-        custom_config={'cmle_training_args': ai_platform_training_args})
+  # Train using a custom executor. This requires TFX >= 0.14.
+  #trainer = Trainer(
+  #  custom_executor_spec=executor_spec.ExecutorClassSpec(
+  #    ai_platform_trainer_executor.Executor),
+  #  module_file=module_file,
+  #  transformed_examples=transform.outputs.transformed_examples,
+  #  schema=infer_schema.outputs.output,
+  #  transform_output=transform.outputs.transform_output,
+  #  train_args=trainer_pb2.TrainArgs(num_steps=10000),
+  #  eval_args=trainer_pb2.EvalArgs(num_steps=5000),
+  #  custom_config={'ai_platform_training_args': ai_platform_training_args})
 
   # Uses TFMA to compute a evaluation statistics over features of a model.
-  model_analyzer = Evaluator(
-      examples=example_gen.outputs.examples,
-      model_exports=trainer.outputs.output,
-      feature_slicing_spec=evaluator_pb2.FeatureSlicingSpec(specs=[
-          evaluator_pb2.SingleSlicingSpec(
-              column_for_slicing=['trip_start_hour'])
-      ]))
+  #model_analyzer = Evaluator(
+  #  examples=example_gen.outputs.examples,
+  #  model_exports=trainer.outputs.output,
+  #  feature_slicing_spec=evaluator_pb2.FeatureSlicingSpec(specs=[
+  #    evaluator_pb2.SingleSlicingSpec(
+  #    column_for_slicing=['trip_start_hour'])
+  #  ]))
 
   # Performs quality validation of a candidate model (compared to a baseline).
-  model_validator = ModelValidator(
-      examples=example_gen.outputs.examples, model=trainer.outputs.output)
+  #model_validator = ModelValidator(
+  #  examples=example_gen.outputs.examples, model=trainer.outputs.output)
 
   # Checks whether the model passed the validation steps and pushes the model
   # to a destination if check passed.
-  try:
-    from tfx.extensions.google_cloud_ai_platform.pusher import executor as ai_platform_pusher_executor  # pylint: disable=g-import-not-at-top
-    # Deploy the model on Google Cloud AI Platform. This requires TFX >=0.14.
-    pusher = Pusher(
-        custom_executor_spec=executor_spec.ExecutorClassSpec(
-            ai_platform_pusher_executor.Executor),
-        model_export=trainer.outputs.output,
-        model_blessing=model_validator.outputs.blessing,
-        custom_config={'ai_platform_serving_args': ai_platform_serving_args})
-  except ImportError:
-    # Deploy the model on Google Cloud AI Platform, using a deprecated flag.
-    pusher = Pusher(
-        model_export=trainer.outputs.output,
-        model_blessing=model_validator.outputs.blessing,
-        custom_config={'cmle_serving_args': ai_platform_serving_args},
-        push_destination=pusher_pb2.PushDestination(
-            filesystem=pusher_pb2.PushDestination.Filesystem(
-                base_directory=serving_model_dir)))
+  # Deploy the model on Google Cloud AI Platform. This requires TFX >=0.14.
+  #pusher = Pusher(
+  #  custom_executor_spec=executor_spec.ExecutorClassSpec(
+  #    ai_platform_pusher_executor.Executor),
+  #  model_export=trainer.outputs.output,
+  #  model_blessing=model_validator.outputs.blessing,
+  #  custom_config={'ai_platform_serving_args': ai_platform_serving_args})
 
   return pipeline.Pipeline(
       pipeline_name=pipeline_name,
       pipeline_root=pipeline_root,
       components=[
-          example_gen, statistics_gen, infer_schema, validate_stats, transform,
-          trainer, model_analyzer, model_validator, pusher
+          example_gen,
+          statistics_gen, 
+          infer_schema, 
+          validate_stats, 
+          #transform,
+          #trainer, 
+          #model_analyzer, 
+          #model_validator, 
+          #pusher
       ],
       additional_pipeline_args={
           'beam_pipeline_args': beam_pipeline_args,
@@ -246,6 +228,9 @@ def _create_pipeline(
 
 
 if __name__ == '__main__':
+
+  # Read configuration settings from settings.yaml
+  
   
   # Configure TFX components to get connection information for Cloud SQL hosted 
   # MySQL from environment variables.
