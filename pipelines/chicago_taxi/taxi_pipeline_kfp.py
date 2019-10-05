@@ -19,6 +19,7 @@ from __future__ import print_function
 
 import os
 import yaml
+import pathlib
 
 from typing import Dict, List, Text
 from tfx.components.base import executor_spec
@@ -36,7 +37,6 @@ from tfx.orchestration.kubeflow import kubeflow_dag_runner
 from tfx.proto import evaluator_pb2
 from tfx.proto import pusher_pb2
 from tfx.proto import trainer_pb2
-
 from tfx.orchestration.kubeflow.proto import kubeflow_pb2
 from tfx.extensions.google_cloud_ai_platform.trainer import executor as ai_platform_trainer_executor  # pylint: disable=g-import-not-at-top
 from tfx.extensions.google_cloud_ai_platform.pusher import executor as ai_platform_pusher_executor  # pylint: disable=g-import-not-at-top
@@ -49,12 +49,12 @@ SETTINGS_FILE = 'settings.yaml'
 settings = yaml.safe_load(pathlib.Path(SETTINGS_FILE).read_text())
 _pipeline_name = settings['pipeline']['name']
 _project_id = settings['environment']['project_id']
-_gcp_region = settings['envionment']['region']
-_pipeline_root = '{}/{}'.format(settings['environment']['artifact_store_root'], _pipeline_name)
-_trainer_module = '{}/{}/{}'.format(settings['environment']['artifact_store_root'], 
-                                    settings['environment']['modules_folder'],
-                                    settings['trainer']['train_module'])
-
+_gcp_region = settings['environment']['region']
+_pipeline_root = '{}/{}'.format(settings['environment']['artifacts_root'], 
+                                   _pipeline_name)
+_trainer_module_file = settings['trainer']['trainer_module_file'] 
+_transform_module_file = settings['transform']['transform_module_file'] 
+_beam_tmp_folder = '{}/beam/tmp'.format(settings['environment']['artifacts_root'])
 
 # Directory and data locations (uses Google Cloud Storage).
 # _input_bucket = 'gs://caip-tfx'
@@ -73,13 +73,6 @@ _trainer_module = '{}/{}/{}'.format(settings['environment']['artifact_store_root
 _ai_platform_training_args = {
     'project': _project_id,
     'region': _gcp_region,
-    # Starting from TFX 0.14, training on AI Platform uses custom containers:
-    # https://cloud.google.com/ml-engine/docs/containers-overview
-    # You can specify a custom container here. If not specified, TFX will use a
-    # a public container image matching the installed version of TFX.
-    # 'masterConfig': { 'imageUri': 'gcr.io/my-project/my-container' },
-    # Note that if you do specify a custom container, ensure the entrypoint
-    # calls into TFX's run_executor script (tfx/scripts/run_executor.py)
 }
 
 # A dict which contains the serving job parameters to be passed to Google
@@ -95,13 +88,13 @@ _ai_platform_serving_args = {
 }
 
 # Beam args to run data processing on DataflowRunner.
-# _beam_pipeline_args = [
-#    '--runner=DataflowRunner',
-#    '--experiments=shuffle_mode=auto',
-#    '--project=' + _project_id,
-#    '--temp_location=' + os.path.join(_output_bucket, 'tmp'),
-#    '--region=' + _gcp_region,
-#]
+_beam_pipeline_args = [
+    '--runner=DataflowRunner',
+    '--experiments=shuffle_mode=auto',
+    '--project=' + _project_id,
+    '--temp_location=' + _beam_tmp_folder,
+    '--region=' + _gcp_region,
+]
 
 # The rate at which to sample rows from the Chicago Taxi dataset using BigQuery.
 # The full taxi dataset is > 120M record.  In the interest of resource
@@ -143,8 +136,12 @@ _query = """
 
 
 def _create_pipeline(
-    pipeline_name: Text, pipeline_root: Text, query: Text, module_file: Text,
-    serving_model_dir: Text, beam_pipeline_args: List[Text],
+    pipeline_name: Text,
+    pipeline_root: Text,
+    query: Text,
+    trainer_module_file: Text,
+    transform_module_file: Text,
+    beam_pipeline_args: List[Text],
     ai_platform_training_args: Dict[Text, Text],
     ai_platform_serving_args: Dict[Text, Text]) -> pipeline.Pipeline:
   """Implements the chicago taxi pipeline with TFX and Kubeflow Pipelines."""
@@ -164,47 +161,47 @@ def _create_pipeline(
       stats=statistics_gen.outputs.output, schema=infer_schema.outputs.output)
 
   # Performs transformations and feature engineering in training and serving.
-  #transform = Transform(
-  #    input_data=example_gen.outputs.examples,
-  #    schema=infer_schema.outputs.output,
-  #    module_file=module_file)
+  transform = Transform(
+    input_data=example_gen.outputs.examples,
+    schema=infer_schema.outputs.output,
+    module_file=transform_module_file)
 
   # Uses user-provided Python function that implements a model using TF-Learn
   # to train a model on Google Cloud AI Platform.
   # Train using a custom executor. This requires TFX >= 0.14.
-  #trainer = Trainer(
-  #  custom_executor_spec=executor_spec.ExecutorClassSpec(
-  #    ai_platform_trainer_executor.Executor),
-  #  module_file=module_file,
-  #  transformed_examples=transform.outputs.transformed_examples,
-  #  schema=infer_schema.outputs.output,
-  #  transform_output=transform.outputs.transform_output,
-  #  train_args=trainer_pb2.TrainArgs(num_steps=10000),
-  #  eval_args=trainer_pb2.EvalArgs(num_steps=5000),
-  #  custom_config={'ai_platform_training_args': ai_platform_training_args})
+  trainer = Trainer(
+    custom_executor_spec=executor_spec.ExecutorClassSpec(
+      ai_platform_trainer_executor.Executor),
+    module_file=trainer_module_file,
+    transformed_examples=transform.outputs.transformed_examples,
+    schema=infer_schema.outputs.output,
+    transform_output=transform.outputs.transform_output,
+    train_args=trainer_pb2.TrainArgs(num_steps=10000),
+    eval_args=trainer_pb2.EvalArgs(num_steps=5000),
+    custom_config={'ai_platform_training_args': ai_platform_training_args})
 
   # Uses TFMA to compute a evaluation statistics over features of a model.
-  #model_analyzer = Evaluator(
-  #  examples=example_gen.outputs.examples,
-  #  model_exports=trainer.outputs.output,
-  #  feature_slicing_spec=evaluator_pb2.FeatureSlicingSpec(specs=[
-  #    evaluator_pb2.SingleSlicingSpec(
-  #    column_for_slicing=['trip_start_hour'])
-  #  ]))
+  model_analyzer = Evaluator(
+    examples=example_gen.outputs.examples,
+    model_exports=trainer.outputs.output,
+    feature_slicing_spec=evaluator_pb2.FeatureSlicingSpec(specs=[
+      evaluator_pb2.SingleSlicingSpec(
+      column_for_slicing=['trip_start_hour'])
+    ]))
 
   # Performs quality validation of a candidate model (compared to a baseline).
-  #model_validator = ModelValidator(
-  #  examples=example_gen.outputs.examples, model=trainer.outputs.output)
+  model_validator = ModelValidator(
+    examples=example_gen.outputs.examples, model=trainer.outputs.output)
 
   # Checks whether the model passed the validation steps and pushes the model
   # to a destination if check passed.
   # Deploy the model on Google Cloud AI Platform. This requires TFX >=0.14.
-  #pusher = Pusher(
-  #  custom_executor_spec=executor_spec.ExecutorClassSpec(
-  #    ai_platform_pusher_executor.Executor),
-  #  model_export=trainer.outputs.output,
-  #  model_blessing=model_validator.outputs.blessing,
-  #  custom_config={'ai_platform_serving_args': ai_platform_serving_args})
+  pusher = Pusher(
+    custom_executor_spec=executor_spec.ExecutorClassSpec(
+      ai_platform_pusher_executor.Executor),
+    model_export=trainer.outputs.output,
+    model_blessing=model_validator.outputs.blessing,
+    custom_config={'ai_platform_serving_args': ai_platform_serving_args})
 
   return pipeline.Pipeline(
       pipeline_name=pipeline_name,
@@ -214,14 +211,14 @@ def _create_pipeline(
           statistics_gen, 
           infer_schema, 
           validate_stats, 
-          #transform,
-          #trainer, 
-          #model_analyzer, 
-          #model_validator, 
-          #pusher
+          transform,
+          trainer, 
+          model_analyzer, 
+          model_validator, 
+          pusher
       ],
       additional_pipeline_args={
-          'beam_pipeline_args': beam_pipeline_args,
+        'beam_pipeline_args': beam_pipeline_args
       },
       log_root='/var/tmp/tfx/logs',
   )
@@ -256,13 +253,14 @@ if __name__ == '__main__':
       pipeline_operator_funcs=operator_funcs
   )
 
+
   kubeflow_dag_runner.KubeflowDagRunner(config=runner_config).run(
       _create_pipeline(
           pipeline_name=_pipeline_name,
           pipeline_root=_pipeline_root,
           query=_query,
-          module_file=_module_file,
-          serving_model_dir=_serving_model_dir,
+          transform_module_file=_transform_module_file,
+          trainer_module_file=_trainer_module_file,
           beam_pipeline_args=_beam_pipeline_args,
           ai_platform_training_args=_ai_platform_training_args,
           ai_platform_serving_args=_ai_platform_serving_args,
