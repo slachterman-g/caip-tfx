@@ -57,6 +57,11 @@ _VOCAB_FEATURE_KEYS = [
 _LABEL_KEY = 'tips'
 _FARE_KEY = 'fare'
 
+def _transformed_name(key):
+  return key + '_xf'
+
+def _transformed_names(keys):
+  return [_transformed_name(key) for key in keys]
 
 def _build_estimator(config, hidden_units=None, warm_start_from=None):
   """Build an estimator for predicting the tipping behavior of taxi riders.
