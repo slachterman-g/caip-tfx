@@ -10,6 +10,8 @@ The custom container image is a derivative of the `base-cpu` Deep Learning conta
 - Python Fire 
 - kubectl
 - mysql client
+- Kustomize 3.1.0
+- Terraform 0.12.8
 
 
 The Python packages are pre-installed in a conda environment named `tfx`. This environment is linked into a Jupyter kernel also named `tfx`.
