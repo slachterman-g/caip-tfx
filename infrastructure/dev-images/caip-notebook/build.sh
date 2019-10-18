@@ -16,9 +16,10 @@
 # Build an AI Platform Notebook image with TF 1.14 and TFX 0.14RC0
 
 PROJECT_ID=$(gcloud config get-value core/project)
-IMAGE_NAME=kf-tfx-dev
+IMAGE_NAME=tfx-dev
 TAG=latest
+PYTHON=3.6
 
-IMAGE_URI="gcr.io/${PROJECT_ID}/${IMAGE_NAME}:${TAG}"
+IMAGE_URI="gcr.io/${PROJECT_ID}/${IMAGE_NAME}-${PYTHON}:${TAG}"
 
-gcloud builds submit --tag ${IMAGE_URI} .
+gcloud builds submit --timeout 15m --tag ${IMAGE_URI} .

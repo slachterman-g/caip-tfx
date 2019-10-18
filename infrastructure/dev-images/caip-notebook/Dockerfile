@@ -6,8 +6,8 @@ RUN PROTOC_ZIP=protoc-3.7.1-linux-x86_64.zip \
 && unzip -o $PROTOC_ZIP -d /usr/local bin/protoc \
 && unzip -o $PROTOC_ZIP -d /usr/local include/* \
 && rm -f $PROTOC_ZIP
-RUN conda create -n tfx python=3.7 && source activate tfx \
-&& pip install tensorflow==1.14 httplib2==0.12.0 \
+RUN conda create -n tfx python=3.6 && source activate tfx \
+&& pip install tensorflow==1.14 httplib2==0.12.0 pyyaml==3.13 \
 && git clone https://github.com/tensorflow/tfx.git \
 && cd tfx \
 && python setup.py sdist \

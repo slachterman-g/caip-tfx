@@ -13,7 +13,7 @@ steps:
 #  args: ['build', '-t', 'gcr.io/$PROJECT_ID/$_TFX_CUSTOM_IMAGE:$_TAG', '.']
 #  dir: $_PIPELINE_FOLDER
 
-# Upload compiled pipelines to the KFP cluster
+# Compile and pload compiled pipelines to the KFP cluster
 - name: 'gcr.io/cloud-builders/gcloud'
   args: ['container', 'clusters', 'get-credentials', '$_CLUSTER_NAME', '--zone', '$_ZONE']
 
