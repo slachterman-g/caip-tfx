@@ -54,20 +54,11 @@ FROM gcr.io/[YOUR PROJECT ID]/tfx-dev-3.6
 	"extensions": ["ms-python.python"]
 }
 ```
-5. From the Visual Studio Code command pallete ([SHIFT][COMMAND][P]) select **Remote-Containers:Open Folder in Container**. Find the root folder of the repo. After select the folder, Visual Studio Code downloads your image, starts the container and installs the Python extension to the container. 
+5. From the Visual Studio Code command pallete (**[SHIFT][COMMAND][P]**) select **Remote-Containers:Open Folder in Container**. Find the root folder of the repo. After selecting the folder, Visual Studio Code downloads your image, starts the container and installs the Python extension to the container. 
 
 ### Configuring Visual Studio Code for remote development
-
-7. You can now connect to AI Platform Notebook using a SSH tunnel. 
-  - Update the `docker.host` property in your user or workspace `settings.json` as follows
-  ```
-  "docker.host":"tcp//localhost:23750"
-  ```
-  - From a local terminal set up an SSH tunnel
-  ```
-  ssh -NL localhost:23750:/var/run/docker.sock [YOUR CONFIGURATION NAME] 
-  ```
-1. Make sure you can connect to the AI Platform Notebook's vm instance from your workstation using `ssh`
+1. Create an AI Platform Notebook using the development image as described in the **Creating an AI Platform Notebook** section.
+2. Make sure you can connect to the AI Platform Notebook's vm instance from your workstation using `ssh`
 ```
 gcloud compute ssh [YOUR AI PLATFORM NOTEBOOK VM NAME] --zone [YOUR ZONE]
 ```
@@ -82,9 +73,16 @@ Host [YOUR CONFIGURATION NAME]
 ```
 ssh [YOUR CONFIGURATION NAME]
 ```
+4. You can now connect to AI Platform Notebook using a SSH tunnel. 
+  - Update the `docker.host` property in your user or workspace Visual Studio Code `settings.json` as follows
+  ```
+  "docker.host":"tcp//localhost:23750"
+  ```
+  - From a local terminal set up an SSH tunnel
+  ```
+  ssh -NL localhost:23750:/var/run/docker.sock [YOUR CONFIGURATION NAME] 
+  ```
 
-
-
-8. In Visual Studio Code bring up the **Command Palette** (F1) and type in **Remote-Containers** for a full list of commands. Choose **Attach to Running Container** and select your ssh configuration.
+5. In Visual Studio Code bring up the **Command Palette** (F1) and type in **Remote-Containers** for a full list of commands. Choose **Attach to Running Container** and select your ssh configuration.
 
 
