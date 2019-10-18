@@ -1,9 +1,9 @@
 # AI Platform Notebook for TFX/KFP development
 
-This folder contains a deployment configuration for a custom, container based AI Platform Notebook optimized for TFX and Kubeflow Pipelines development.
+This folder contains the Dockerfile and the build script for the AI Platform Notebook container image optimized for TFX and Kubeflow Pipelines development.
 
-The custom container image is a derivative of the `base-cpu` Deep Learning container (`gcr.io/deeplearning-platform-release/base-cpu`) and includes the following additional components:
-- Python 3.7
+The  image is a derivative of the `base-cpu` Deep Learning container (`gcr.io/deeplearning-platform-release/base-cpu`) and includes the following additional components:
+- Python 3.6
 - Tensorflow 1.14
 - TFX - the latest build from the master branch
 - KFP SDK - the latest build from the master branch 
@@ -13,20 +13,14 @@ The custom container image is a derivative of the `base-cpu` Deep Learning conta
 - Kustomize 3.1.0
 - Terraform 0.12.8
 
-
 The Python packages are pre-installed in a conda environment named `tfx`. This environment is linked into a Jupyter kernel also named `tfx`.
 
 Since the image is a derivative of a Deep Learning container it can be used to provision an AI Platform Notebook.
 
 ## Creating an AI Platform Notebook 
 To create an AI Platform Notebook based on the image:
-1. Build the image using the Dockerfile in the `dev-image` folder and push it into your project's **Container Registry**. The `build.sh` script demonstrates how to build and push the image using **Cloud Build**
-2. Use the `create-notebook.sh` script to provision an AI Platform Notebook. After a few minutes the notebook will appear in the AI Platform Notebooks section of GCP Console. You can retrieve the URL to JupyterLab using the following `gcloud` command:
-```
-INSTANCE_NAME=[YOUR NOTEBOOK NAME]
-gcloud compute instances describe "${INSTANCE_NAME}" \
-  --format='value[](metadata.items.proxy-url)' 
-```
+1. Build the image and push it into your project's **Container Registry**. The `build.sh` script demonstrates how to build and push the image using **Cloud Build**
+2. Create a CPU based AI Platform Notebook using [Cloud Console](https://console.cloud.google.com/ai-platform/notebooks/instances). When configuring the notebook host pick use the **Customize instance** option and select **Custom container** in the **Environment** drop list. Enter the full URI to the custom image created in the previous step.
 
 ## Using the TFX/KFP development image with Visual Studio Code
 You can also use the image with your favorite IDE. The following instructions demonstrate how to configure Visual Studio Code for remote development using an AI Platform Notebook. The instructions were tested on MacOS but should be transferable to other platforms.
