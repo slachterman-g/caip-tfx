@@ -27,17 +27,35 @@ You can also use the image with Visual Studio Code for both local and remote dev
 
 ### Preparing your MacOS workstation
 1. Install and initialize [Google Cloud SDK](https://cloud.google.com/sdk/docs/quickstart-macos)
-1. Install Docker (On a Mac install Docker Desktop for Mac)
-https://docs.docker.com/docker-for-mac/install/
 
-1. Install Visual Studio Code
-https://code.visualstudio.com/download
+1. [Install Docker (On a Mac install Docker Desktop for Mac](https://docs.docker.com/docker-for-mac/install/)
 
-1. Install Visual Studio Code Remote Development Extension
-https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack
+1. [Install Visual Studio Code](https://code.visualstudio.com/download)
+
+1. [Install Visual Studio Code Remote Development Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack)
 
 
 ### Configuring Visual Studio Code for local development
+1. Clone this repo on your workstation
+1. In the repo's root create the `.devcontainer` folder.
+1. In the folder create a Dockerfile:
+```
+FROM gcr.io/[YOUR PROJECT ID]/tfx-dev-3.6
+```
+1. In the `.devcontainer` folder create the `devcontainer.json` file
+```
+{
+	"name": "Existing Dockerfile",
+	"context": "..",
+	"dockerFile": "Dockerfile",
+	"settings": { 
+		"terminal.integrated.shell.linux": null
+	},
+	"extensions": ["ms-python.python"]
+}
+```
+1. From the Visual Studio Code command pallete ([SHIFT][COMMAND][P]) select **Remote-Containers:Open Folder in Container**. Select the root folder of the repo. Visual Studio Code downloads your image, starts the container and install the Python extension to the container. 
+
 ### Configuring Visual Studio Code for remote development
 
 7. You can now connect to AI Platform Notebook using a SSH tunnel. 
