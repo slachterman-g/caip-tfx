@@ -6,5 +6,6 @@ Repository structure:
 - `infrastructure` - Infrastructure As Code (IaC) configurations for provisioning GCP services comprising MLOps environments
 - `notebooks` - Jupyter notebooks demonstrating the use of TFX for experimentation, machine learning pipeline development and pipeline run analysis
 - `pipelines` - example pipelines and pipeline templates
-- `cicd` - Cloud Build configurations and scripts for building and deploying ML pipelines
+- `cicd` - CICD configurations and scripts
+
 
