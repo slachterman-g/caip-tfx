@@ -1,11 +1,7 @@
 pipeline:
-  name: chicago_taxi_kfp3
+  name: chicago_taxi
+  model_name: chicago_taxi
 environment:
   project_id: jk-demo1
   region: us-central1
-  artifacts_root: gs://caip-tfx/pipeline-artifacts
-trainer:
-  trainer_module_file: gs://caip-tfx/modules/train.py
-transform:
-  transform_module_file: gs://caip-tfx/modules/transform.py
-
+  artifact_store: gs://jk-demo-artifacts

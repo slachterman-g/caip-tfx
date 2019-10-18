@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from utils.use_mysql_secret import use_mysql_secret 
+from helpers.use_mysql_secret import use_mysql_secret 

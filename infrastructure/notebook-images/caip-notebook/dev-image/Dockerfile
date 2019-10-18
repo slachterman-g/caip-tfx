@@ -16,7 +16,8 @@ RUN conda create -n tfx python=3.7 && source activate tfx \
 && git clone https://github.com/kubeflow/pipelines.git \
 && cd pipelines/sdk/python \
 && ./build.sh \
-&& pip install kfp.tar.gz 
+&& pip install kfp.tar.gz \
+&& python -m ipykernel install --name tfx 
 RUN cd /usr/local/bin \
 && wget https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64 \
 && chmod 755 kustomize_3.1.0_linux_amd64 \

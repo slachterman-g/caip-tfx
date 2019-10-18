@@ -41,50 +41,39 @@ from tfx.orchestration.kubeflow.proto import kubeflow_pb2
 from tfx.extensions.google_cloud_ai_platform.trainer import executor as ai_platform_trainer_executor  # pylint: disable=g-import-not-at-top
 from tfx.extensions.google_cloud_ai_platform.pusher import executor as ai_platform_pusher_executor  # pylint: disable=g-import-not-at-top
 
-from utils import use_mysql_secret
+from helpers import use_mysql_secret
 from kfp import gcp
+
 SETTINGS_FILE = 'settings.yaml'
 
 # Load configuration settings
 settings = yaml.safe_load(pathlib.Path(SETTINGS_FILE).read_text())
 _pipeline_name = settings['pipeline']['name']
+_model_name = settings['pipeline']['model_name']
 _project_id = settings['environment']['project_id']
 _gcp_region = settings['environment']['region']
-_pipeline_root = '{}/{}'.format(settings['environment']['artifacts_root'], 
-                                   _pipeline_name)
-_trainer_module_file = settings['trainer']['trainer_module_file'] 
-_transform_module_file = settings['transform']['transform_module_file'] 
-_beam_tmp_folder = '{}/beam/tmp'.format(settings['environment']['artifacts_root'])
-
-# Directory and data locations (uses Google Cloud Storage).
-# _input_bucket = 'gs://caip-tfx'
-# _output_bucket = 'gs://caip-tfx'
-# _tfx_root = os.path.join(_output_bucket, 'tfx')
-# _pipeline_root = os.path.join(_tfx_root, _pipeline_name)
+_artifact_store = settings['environment']['artifact_store']
+_pipeline_root = '{}/{}'.format(_artifact_store, _pipeline_name)
+_trainer_module_file = 'modules/train.py'
+_transform_module_file = 'modules/transform.py'
+_beam_tmp_folder = '{}/beam/tmp'.format(_artifact_store)
 
 # trained model here.
 # _serving_model_dir = os.path.join(_output_bucket, 'serving_model',
 #                                  _pipeline_name)
 
-# A dict which contains the training job parameters to be passed to Google
-# Cloud AI Platform. For the full set of parameters supported by Google Cloud AI
-# Platform, refer to
+# AI Platform Training Platform job parameters
 # https://cloud.google.com/ml-engine/reference/rest/v1/projects.jobs#Job
 _ai_platform_training_args = {
     'project': _project_id,
     'region': _gcp_region,
 }
 
-# A dict which contains the serving job parameters to be passed to Google
-# Cloud AI Platform. For the full set of parameters supported by Google Cloud AI
-# Platform, refer to
+# AI Platform Prediction model parameters
 # https://cloud.google.com/ml-engine/reference/rest/v1/projects.models
 _ai_platform_serving_args = {
-    'model_name': 'chicago_taxi',
+    'model_name': _model_name,
     'project_id': _project_id,
-    # Starting from TFX 0.14, 'runtime_version' is not relevant anymore.
-    # Instead, it will be populated by TFX as <major>.<minor> version of
-    # the imported TensorFlow package;
 }
 
 # Beam args to run data processing on DataflowRunner.
@@ -95,6 +84,8 @@ _beam_pipeline_args = [
     '--temp_location=' + _beam_tmp_folder,
     '--region=' + _gcp_region,
 ]
+
+# The query for BigQueryExamplGen component
 
 # The rate at which to sample rows from the Chicago Taxi dataset using BigQuery.
 # The full taxi dataset is > 120M record.  In the interest of resource
@@ -134,7 +125,7 @@ _query = """
            < {query_sample_rate}""".format(
                max_int64=_max_int64, query_sample_rate=_query_sample_rate)
 
-
+# Pipeline DSL
 def _create_pipeline(
     pipeline_name: Text,
     pipeline_root: Text,
@@ -217,51 +208,40 @@ def _create_pipeline(
           model_validator, 
           pusher
       ],
-      additional_pipeline_args={
-        'beam_pipeline_args': beam_pipeline_args
-      },
+      beam_pipeline_args=beam_pipeline_args,
       log_root='/var/tmp/tfx/logs',
   )
 
 
-if __name__ == '__main__':
+# ML Metadata Settings 
+ 
+metadata_config = kubeflow_pb2.KubeflowMetadataConfig()
+metadata_config.mysql_db_service_host.environment_variable = 'MYSQL_SERVICE_HOST'
+metadata_config.mysql_db_service_port.environment_variable = 'MYSQL_SERVICE_PORT'
+metadata_config.mysql_db_name.value = 'metadb'
+metadata_config.mysql_db_user.environment_variable = 'MYSQL_USERNAME' 
+metadata_config.mysql_db_password.environment_variable = 'MYSQL_PASSWORD'
 
-  # Read configuration settings from settings.yaml
-  
-  
-  # Configure TFX components to get connection information for Cloud SQL hosted 
-  # MySQL from environment variables.
-   
-  config = kubeflow_pb2.KubeflowMetadataConfig()
-  config.mysql_db_service_host.environment_variable = 'MYSQL_SERVICE_HOST'
-  config.mysql_db_service_port.environment_variable = 'MYSQL_SERVICE_PORT'
-  config.mysql_db_name.value = 'metadb'
-  config.mysql_db_user.environment_variable = 'MYSQL_USERNAME' 
-  config.mysql_db_password.environment_variable = 'MYSQL_PASSWORD'
+# Kubeflow Runner Configuration 
+tfx_image = os.environ.get('KUBEFLOW_TFX_IMAGE', None)
 
-  metadata_config = config
-
-  # Configure the runtime environment for the TFX component.
-  # use_mysql_secret is a utility function that sets MYSQL_USERNAME
-  # and MYSQL_PASSWORD environment variables with values from the Kubernetes
-  # mysql-credentials secret
-
-  operator_funcs = [gcp.use_gcp_secret('user-gcp-sa'), use_mysql_secret('mysql-credential')]
-
-  runner_config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
-      kubeflow_metadata_config=metadata_config,
-      pipeline_operator_funcs=operator_funcs
-  )
+operator_funcs = [gcp.use_gcp_secret('user-gcp-sa'), use_mysql_secret('mysql-credential')]
+runner_config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
+    kubeflow_metadata_config=metadata_config,
+    pipeline_operator_funcs=operator_funcs,
+    tfx_image=tfx_image
+)
 
 
-  kubeflow_dag_runner.KubeflowDagRunner(config=runner_config).run(
-      _create_pipeline(
-          pipeline_name=_pipeline_name,
-          pipeline_root=_pipeline_root,
-          query=_query,
-          transform_module_file=_transform_module_file,
-          trainer_module_file=_trainer_module_file,
-          beam_pipeline_args=_beam_pipeline_args,
-          ai_platform_training_args=_ai_platform_training_args,
-          ai_platform_serving_args=_ai_platform_serving_args,
-      ))
+# Compile pipeline
+kubeflow_dag_runner.KubeflowDagRunner(config=runner_config).run(
+    _create_pipeline(
+        pipeline_name=_pipeline_name,
+        pipeline_root=_pipeline_root,
+        query=_query,
+        transform_module_file=_transform_module_file,
+        trainer_module_file=_trainer_module_file,
+        beam_pipeline_args=_beam_pipeline_args,
+        ai_platform_training_args=_ai_platform_training_args,
+        ai_platform_serving_args=_ai_platform_serving_args,
+    ))

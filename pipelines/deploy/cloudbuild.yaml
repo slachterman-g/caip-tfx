@@ -1,0 +1,33 @@
+# Build and deploy a TFX pipeline. This is an interim solution till tfx CLI fully 
+# supports automated building and deploying.
+# 
+
+steps:
+# Build the tfx CLI image
+# - name: 'gcr.io/cloud-builders/docker'
+#  args: ['build', '-t', 'gcr.io/$PROJECT_ID/tfx-cli', '.']
+#  dir: 'deploy/tfx-cli'
+
+# Build the image that encapsulates transform and train modules
+#- name: 'gcr.io/cloud-builders/docker'
+#  args: ['build', '-t', 'gcr.io/$PROJECT_ID/$_TFX_CUSTOM_IMAGE:$_TAG', '.']
+#  dir: $_PIPELINE_FOLDER
+
+# Upload compiled pipelines to the KFP cluster
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['container', 'clusters', 'get-credentials', '$_CLUSTER_NAME', '--zone', '$_ZONE']
+
+- name: 'gcr.io/$PROJECT_ID/tfx-cli'
+  entrypoint: '/bin/bash'
+  args: 
+  - '-c'
+  - |
+    tfx pipeline create --pipeline_path $_PIPELINE_DSL 
+  env: ['KUBEFLOW_TFX_IMAGE=gcr.io/$PROJECT_ID/$_TFX_CUSTOM_IMAGE:$_TAG']
+  dir: $_PIPELINE_FOLDER
+
+
+
+
+#images: ['gcr.io/$PROJECT_ID/$_TFX_CUSTOM_IMAGE', 'gcr.io/$PROJECT_ID/tfx-cli']
+#images: ['gcr.io/$PROJECT_ID/tfx-cli']
