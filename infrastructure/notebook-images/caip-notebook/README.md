@@ -3,13 +3,16 @@
 This folder contains a deployment configuration for a custom, container based AI Platform Notebook optimized for TFX and Kubeflow Pipelines development.
 
 The custom container image is a derivative of the `base-cpu` Deep Learning container (`gcr.io/deeplearning-platform-release/base-cpu`) and includes the following additional components:
-- Python 3.6.8
+- Python 3.7
 - Tensorflow 1.14
-- TFX 0.14
-- The latest version of KFP SDK 
+- TFX - the latest build from the master branch
+- KFP SDK - the latest build from the master branch 
 - Python Fire 
 - kubectl
 - mysql client
+- Kustomize 3.1.0
+- Terraform 0.12.8
+
 
 The Python packages are pre-installed in a conda environment named `tfx`. This environment is linked into a Jupyter kernel also named `tfx`.
 
