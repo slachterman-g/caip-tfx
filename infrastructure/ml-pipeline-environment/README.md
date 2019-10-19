@@ -91,8 +91,9 @@ To configure connection settings:
 1. Create a Kubernetes namespace. The default name is *kubeflow*. If you want to use a different name make sure to update the `kustomize.yaml` file as described in the following steps.
 ```
 gcloud container clusters get-credentials [YOUR_CLUSTER_NAME] --zone [YOUR_CLUSTER_ZONE]
-kubectl create namespace
+kubectl create namespace kubeflow
 ```
+1. Create the `gcp-usr-sa` kubernets secret.
 1. Rename `gcp-configs.env.template` to `gcp-configs.env`. Replace the placeholders in the file with the values from your environment. Don't use the `gs://` prefix when configuring the *bucket_name*. If you provisioned the infrastructure with the provided Terraform configurations the bucket name is `[YOUR_PREFIX]-artifact-store`. Use the following format for the *connection_name* - [YOUR PROJECT]:[YOUR REGION]:[YOUR INSTANCE NAME]. If you provisioned the infrastructure with the provided Terraform configurations the instance name is `[YOUR PREFIX]-ml-metadata`.
 
  
