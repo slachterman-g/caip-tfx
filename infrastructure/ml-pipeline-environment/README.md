@@ -97,7 +97,10 @@ kubectl create namespace kubeflow
 ```
 kubectl -n kubeflow create secret generic user-gcp-sa --from-file=application_default_credentials.json  --from-file=user-gcp-sa.json=application_default_credentials.json
 ```
-
+5. Create the `mysql-credential` Kubernetes secret.
+```
+kubectl -n kubeflow create secret generic mysql-credential --from-literal=username=root --from-literal=password=[YOUR PASSWORD]
+```
 1. Rename `gcp-configs.env.template` to `gcp-configs.env`. Replace the placeholders in the file with the values from your environment. Don't use the `gs://` prefix when configuring the *bucket_name*. If you provisioned the infrastructure with the provided Terraform configurations the bucket name is `[YOUR_PREFIX]-artifact-store`. Use the following format for the *connection_name* - [YOUR PROJECT]:[YOUR REGION]:[YOUR INSTANCE NAME]. If you provisioned the infrastructure with the provided Terraform configurations the instance name is `[YOUR PREFIX]-ml-metadata`.
 
  
