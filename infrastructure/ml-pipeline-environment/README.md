@@ -101,17 +101,15 @@ kubectl -n kubeflow create secret generic user-gcp-sa --from-file=application_de
 ```
 kubectl -n kubeflow create secret generic mysql-credential --from-literal=username=root --from-literal=password=[YOUR PASSWORD]
 ```
-1. Rename `gcp-configs.env.template` to `gcp-configs.env`. Replace the placeholders in the file with the values from your environment. Don't use the `gs://` prefix when configuring the *bucket_name*. If you provisioned the infrastructure with the provided Terraform configurations the bucket name is `[YOUR_PREFIX]-artifact-store`. Use the following format for the *connection_name* - [YOUR PROJECT]:[YOUR REGION]:[YOUR INSTANCE NAME]. If you provisioned the infrastructure with the provided Terraform configurations the instance name is `[YOUR PREFIX]-ml-metadata`.
+6. Rename `gcp-configs.env.template` to `gcp-configs.env`. Replace the placeholders in the file with the values from your environment. Don't use the `gs://` prefix when configuring the *bucket_name*. If you provisioned the infrastructure with the provided Terraform configurations the bucket name is `[YOUR_PREFIX]-artifact-store`. Use the following format for the *connection_name* - [YOUR PROJECT]:[YOUR REGION]:[YOUR INSTANCE NAME]. If you provisioned the infrastructure with the provided Terraform configurations the instance name is `[YOUR PREFIX]-ml-metadata`.
 
  
 ### Installing Kubeflow Pipelines
 
 To install KFP pipelines:
-1. Make sure that you have the latest version of `gcloud` and `kubectl` installed. Although, the latest versions of `kubectl` support **Kustomize** natively, it is recommended to install `kustomize` as a separate binary as it includes the latest updates that may have not yet made it to `kubectl`. Follow [the installation procedure](https://github.com/kubernetes-sigs/kustomize/blob/master/docs/INSTALL.md) to install **Kustomize**. If you use the development container image, the tested version of **Kustomize** is pre-installed in the image.
 1. Update the `kustomize/kustomization.yaml` with the name the namespace if you want to change the default name.
-1. Configure GKE credentials and apply the manifests. From the `kustomize` folder execute the following commands:
+1. Apply the manifests. From the `kustomize` folder execute the following commands:
 ```
-gcloud container clusters get-credentials [YOUR_CLUSTER_NAME] --zone [YOUR_CLUSTER_ZONE]
 kustomize build . | kubectl apply -f -
 ```
 
