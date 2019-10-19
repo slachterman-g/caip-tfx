@@ -88,15 +88,14 @@ In the reference configuration, KFP utilizes a Cloud SQL hosted MySQL instance a
 
 To configure connection settings:
 1. Make sure that your Cloud SQL instance has the `root` user with a non-blank password.  The instance created by the provided Terraform configuration has the root user removed. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance.
-1. Navigate to the `kustomize` folder.
-1. Use Cloud Console or the `gcloud` [command](https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/keys/create)  to create and download the JSON type private key for the KFP service user. If you provisioned the infrastructure with the provided Terraform configurations the user name is `[YOUR PREFIX]-kfp-cluster@[YOUR PROJECT ID].iam.gserviceaccount.com`. Rename the file to `application_default_credentials.json`
+1. Use Cloud Console or the `gcloud` [command](https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/keys/create)  to create and download the JSON type private key for the KFP service user. If you provisioned the infrastructure with the provided Terraform configurations the user name is `[YOUR PREFIX]-kfp-cluster@[YOUR PROJECT ID].iam.gserviceaccount.com`. Rename the file to `application_default_credentials.json`. **Note that application_default_credentials.json contain sensitive information. Remeber to remove or secure the file after the installation process completes.**
 1. Create a Kubernetes namespace. The default name is *kubeflow*. If you want to use a different name make sure to update the `kustomize.yaml` file as described in the following steps.
 ```
 gcloud container clusters get-credentials [YOUR_CLUSTER_NAME] --zone [YOUR_CLUSTER_ZONE]
 kubectl create namespace
+```
+1. Rename `gcp-configs.env.template` to `gcp-configs.env`. Replace the placeholders in the file with the values from your environment. Don't use the `gs://` prefix when configuring the *bucket_name*. If you provisioned the infrastructure with the provided Terraform configurations the bucket name is `[YOUR_PREFIX]-artifact-store`. Use the following format for the *connection_name* - [YOUR PROJECT]:[YOUR REGION]:[YOUR INSTANCE NAME]. If you provisioned the infrastructure with the provided Terraform configurations the instance name is `[YOUR PREFIX]-ml-metadata`.
 
-1. Rename `gcp-configs.env.template` and `mysql-credential.env.template` to `gcp-configs.env` and `mysql-credential.env`. Replace the placeholders in the files with your values. Don't use the `gs://` prefix when configuring the *bucket_name*. If you provisioned the infrastructure with the provided Terraform configurations the bucket name is `[YOUR_PREFIX]-artifact-store`. Use the following format for the *connection_name* - [YOUR PROJECT]:[YOUR REGION]:[YOUR INSTANCE NAME]. If you provisioned the infrastructure with the provided Terraform configurations the instance name is `[YOUR PREFIX]-ml-metadata`.
-**Note that mysql-credential.env and application_default_credentials.json contain sensitive information. Remeber to remove or secure the files after the installation process completes.**
  
 ### Installing Kubeflow Pipelines
 
