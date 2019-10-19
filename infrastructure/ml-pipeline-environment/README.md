@@ -69,7 +69,7 @@ terraform apply
 
 ## Deploying KFP pipelines
 
-The deployment of Kubeflow Pipelines to the environment's GKE cluster has been automated with **Kustomize**. Before running the provided **Kustomize** overlays you need to configure connections settings to Cloud SQL and GCS store. Note
+The deployment of Kubeflow Pipelines to the environment's GKE cluster has been automated with **Kustomize**. Before running the provided **Kustomize** overlays you need to configure connections settings to Cloud SQL and GCS store. 
 
 ### Configuring connections settings to Cloud SQL and Cloud Storage
 
