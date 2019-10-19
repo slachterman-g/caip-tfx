@@ -10,19 +10,27 @@ This folder contains deployment configurations for a reference ML Environment. T
 
 ![Reference topolgy](/images/environment.png)
 
-The reference enviroment topology and configuration can be fine tuned for a specific role. For example Staging and Production environments optimized for a continuos training worfklow may not utilize AI Platform Notebooks or AI Platform Prediction services.
-
-## Provisioning an Environment
 In the reference environment, all services are configured in a single GCP projects. If you provision multiple environments (e.g. Development, Staging, and Production) each environment should utilize a dedictated project.
 
 Currently, Kubeflow Pipelines is not available as a managed service. In the reference environment, the KFP services are deployed to a dedicated GKE cluster and configured to utilize:
 - A Cloud SQL managed MySQL for ML Metadata and KFP Metadata databases
 - A Cloud Storage bucket for object storage
 
+The reference enviroment topology and configuration can be fine tuned for a specific role. For example Staging and Production environments optimized for a continuos training worfklow may not utilize AI Platform Notebooks or AI Platform Prediction services.
+
+## Provisioning an Environment
+
 Provisioning of an environment has been organized as a three step process:
 1. Enabling the required Cloud Services
-1. Provisioning infrastructure for Kubeflow Pipelines and configuring service accounts and permissions
-1. Deploying KFP pipelines 
+1. Provisioning infrastructure for Kubeflow Pipelines 
+1. Deploying Kubeflow Pipelines 
+
+To execute the above steps you need a workstation with the following components installed:
+- Google Cloud SDK 
+- Kustomize
+- kubectl
+
+All the required components are pre-configured in the dev-image. 
 
 ## Enabling Cloud Services
 The following GCP Cloud APIs need to be enabled in the project hosting an environment:
@@ -69,16 +77,22 @@ You can execute the above commands from any workstation configured with Google C
 
 ## Deploying KFP pipelines
 
-The deployment of Kubeflow Pipelines to the environment's GKE cluster has been automated with **Kustomize**. Before running the provided **Kustomize** overlays you need to configure connections settings to Cloud SQL and GCS store. 
+The deployment of Kubeflow Pipelines to the environment's GKE cluster has been automated with **Kustomize**. To execute the provided **Kustomize** configurations you need a workstation with `
+
+Before running the provided **Kustomize** overlays you need to configure connections settings to Cloud SQL and GCS store. 
 
 ### Configuring connections settings to Cloud SQL and Cloud Storage
 
-In the reference configuration, KFP utilizes a Cloud SQL hosted MySQL instance as the ML Metadata database and a GCS storage bucket as the artifacts store. The KFP services access the Cloud SQL instance through the Cloud SQL proxy. To enable this access path the Cloud SQL proxy needs to be configured with the private key of the KFP service account and the KFP services need access to the credentials of the root user of the Cloud SQL instance. The private key and the credentials are stored as Kubernetes secrets. In addtion the URIs to the GCS bucket and Cloud SQL instances are stored as a Kubernetes ConfigMap.
+In the reference configuration, KFP utilizes a Cloud SQL hosted MySQL instance as the ML Metadata database and a GCS storage bucket as the artifacts store. The KFP services access the Cloud SQL instance through the Cloud SQL proxy. To enable this access path the Cloud SQL proxy needs to be configured with the private key of the KFP service account and the KFP services need access to the credentials of the root user of the Cloud SQL instance. The private key and the credentials are stored as Kubernetes secrets. In addtion the URIs to the GCS bucket and the Cloud SQL instance are stored as a Kubernetes ConfigMap.
 
 To configure connection settings:
 1. Make sure that your Cloud SQL instance has the `root` user with a non-blank password.  The instance created by the provided Terraform configuration has the root user removed. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance.
 1. Navigate to the `kustomize` folder.
 1. Use Cloud Console or the `gcloud` [command](https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/keys/create)  to create and download the JSON type private key for the KFP service user. If you provisioned the infrastructure with the provided Terraform configurations the user name is `[YOUR PREFIX]-kfp-cluster@[YOUR PROJECT ID].iam.gserviceaccount.com`. Rename the file to `application_default_credentials.json`
+1. Create a Kubernetes namespace. The default name is *kubeflow*. If you want to use a different name make sure to update the `kustomize.yaml` file as described in the following steps.
+```
+gcloud container clusters get-credentials [YOUR_CLUSTER_NAME] --zone [YOUR_CLUSTER_ZONE]
+kubectl create namespace
 
 1. Rename `gcp-configs.env.template` and `mysql-credential.env.template` to `gcp-configs.env` and `mysql-credential.env`. Replace the placeholders in the files with your values. Don't use the `gs://` prefix when configuring the *bucket_name*. If you provisioned the infrastructure with the provided Terraform configurations the bucket name is `[YOUR_PREFIX]-artifact-store`. Use the following format for the *connection_name* - [YOUR PROJECT]:[YOUR REGION]:[YOUR INSTANCE NAME]. If you provisioned the infrastructure with the provided Terraform configurations the instance name is `[YOUR PREFIX]-ml-metadata`.
 **Note that mysql-credential.env and application_default_credentials.json contain sensitive information. Remeber to remove or secure the files after the installation process completes.**
