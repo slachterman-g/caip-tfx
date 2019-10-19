@@ -46,7 +46,8 @@ The following GCP Cloud APIs need to be enabled in the project hosting an enviro
 8. Cloud Machine Learning Engine
 9. IAM
 10. Cloud SQL
-11. Dataflow
+11. Cloud SQL Admin
+12. Dataflow
 
 
 ## Provisioning the Kubeflow Pipelines infrastructure
