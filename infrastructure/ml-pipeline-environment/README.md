@@ -10,7 +10,7 @@ This folder contains deployment configurations for a reference ML Environment. T
 
 ![Reference topolgy](/images/environment.png)
 
-The reference enviroment topology and configuration can be fine tuned for a specific role. For example Staging and Production Training environments may not utilize AI Platform Notebooks or AI Platform Prediction.
+The reference enviroment topology and configuration can be fine tuned for a specific role. For example Staging and Production environments configured for Training may not utilize AI Platform Notebooks or AI Platform Prediction services.
 
 Currently, Kubeflow Pipelines is not available as a managed service. In the reference environment, the KFP services are deployed to a dedicated GKE cluster and configured to utilize:
 - A Cloud SQL managed MySQL for ML Metadata and KFP Metadata databases
