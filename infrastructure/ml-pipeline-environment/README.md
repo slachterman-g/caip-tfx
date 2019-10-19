@@ -58,7 +58,7 @@ Refer to the module's documentation for more information.
 To provision the infrastructure:
 
 1. Update `terraform/backend.tf` to point to the GCS bucket and folder for Terraform state management. You can use the bucket in any project as long you have access to it.
-2. Update `terraform/terraform.tfvars` with your *Project ID*, *Region*, and *Name Prefix*. 
+2. Update `terraform/terraform.tfvars` with your *Project ID*, *Region*, and *Name Prefix*. The *Name Prefix* will be added to the name of provisioned resources including: GKE cluster name, GCS bucket name, Cloud SQL instance name.
 3. Execute the updated configuration from the `terraform` folder
 ```
 cd terraform
