@@ -41,18 +41,21 @@ The following GCP Cloud APIs need to be enabled in the project hosting an enviro
 
 ## Provisioning the Kubeflow Pipelines infrastructure
 
-The MVP infrastructure to support a lightweight deployment of Kubeflow Pipelines can be created using the Terraform configuration in the `terraform` folder. The configuration provisions the following services:
+The MVP infrastructure to support a lightweight deployment of Kubeflow Pipelines comprises the following GCP services:
 - A VPC to host GKE cluster
 - A GKE cluster to host KFP services
 - A Cloud SQL managed MySQL instance to host KFP and ML Metadata databases
 - A Cloud Storage bucket to host artifact repository
 - GKE and KFP service accounts with associated roles
 
-The Terraform configuration utilizes the module from
+If you want to utilize the existing services - e.g. the existing GKE cluster or existing Cloud SQL instance - make sure that they are configured as follows:
+(TBD)
+
+You can provision all services required to host Kubeflow Pipelines using the provided Terraform configurations. The configurations utilize the modules from
 https://github.com/jarokaz/terraform-gcp-kfp.
 Refer to the module's documentation for more information.
 
-To provision infrastructure:
+To provision the infrastructure:
 
 1. Update `terraform/backend.tf` to point to the GCS bucket for Terraform state management
 2. Update `terraform/terraform.tfvars` with your *Project ID*, *Region*, and *Name Prefix*. 
@@ -66,24 +69,23 @@ terraform apply
 
 ## Deploying KFP pipelines
 
-The deployment of Kubeflow Pipelines to the environment's GKE cluster has been automated with **Kustomize**. The **Kustomize** configuration rely on the most current version of **Kustomize**. Make sure to install the latest version of **Kustomize** using [the following procedure](https://github.com/kubernetes-sigs/kustomize/blob/master/docs/INSTALL.md). If you use the development container image the tested version of **Kustomize** is pre-installed in the image.
+The deployment of Kubeflow Pipelines to the environment's GKE cluster has been automated with **Kustomize**. Before running the provided **Kustomize** overlays you need to configure connections settings to Cloud SQL and GCS store. Note
 
 ### Configuring connections settings to Cloud SQL and Cloud Storage
 
 In the reference configuration, KFP utilizes external MySQL instance and object storage. The KFP services are designed to read the connection settings (including credentials)  from Kubernetes Secrets and ConfigMaps. 
 
 To configure connection settings:
-
+1.1. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance. The instance created by the Terraform configuration has the root user removed.
 1. Navigate to the `kustomize` folder.
-1. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance. The instance created by the Terraform configuration has the root user removed.
-1. Use Cloud Console or the `gcloud` command to create and download the JSON type private key for the KFP service user. Rename the file to `application_default_credentials.json`
-1. Rename `gcp-configs.env.template` and `mysql-credential.env.template` to `gcp-configs.env` and `mysql-credential.env`. Replace the placeholders in the files with your configs.
+1. Use Cloud Console or the `gcloud` command to create and download the JSON type private key for the KFP service user that was created by Terraform. Rename the file to `application_default_credentials.json`
+1. Rename `gcp-configs.env.template` and `mysql-credential.env.template` to `gcp-configs.env` and `mysql-credential.env`. Replace the placeholders in the files with your values.
 **Note that mysql-credential.env and application_default_credentials.json contain sensitive information. Remeber to remove or secure the files after the installation process completes.**
  
 ### Installing Kubeflow Pipelines
 
 To install KFP pipelines:
-1. Make sure that you have the latest version of `gcloud` and `kubectl` installed. Although, the latest versions of `kubectl` support **Kustomize** natively, it is recommended to install `kustomize` as a separate binary as it includes the latest updates that may have not yet made it to `kubectl`.
+1. Make sure that you have the latest version of `gcloud` and `kubectl` installed. Although, the latest versions of `kubectl` support **Kustomize** natively, it is recommended to install `kustomize` as a separate binary as it includes the latest updates that may have not yet made it to `kubectl`. Follow [the installation procedure](https://github.com/kubernetes-sigs/kustomize/blob/master/docs/INSTALL.md) to install **Kustomize**. If you use the development container image, the tested version of **Kustomize** is pre-installed in the image.
 1. Update the `kustomize/kustomization.yaml` with the name the namespace if you want to change the default name.
 1. Configure GKE credentials and apply the manifests:
 ```
