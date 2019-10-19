@@ -90,7 +90,7 @@ To install KFP pipelines:
 1. Configure GKE credentials and apply the manifests. From the `kustomize` folder execute the following commands:
 ```
 gcloud container clusters get-credentials [YOUR_CLUSTER_NAME] --zone [YOUR_CLUSTER_ZONE]
-kustomize build kustomize | kubectl apply -f -
+kustomize build . | kubectl apply -f -
 ```
 
 ## Accessing KFP UI
