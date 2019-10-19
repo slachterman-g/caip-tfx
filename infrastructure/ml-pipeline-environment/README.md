@@ -76,7 +76,7 @@ terraform init
 terraform apply
 ```
 
-## Deploying KFP pipelines
+## Deploying Kubeflow Pipelines
 
 The deployment of Kubeflow Pipelines to the environment's GKE cluster has been automated with **Kustomize**. To execute the provided **Kustomize** configurations you need a workstation with `
 
