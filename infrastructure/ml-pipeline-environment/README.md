@@ -59,13 +59,13 @@ To provision the infrastructure:
 
 1. Update `terraform/backend.tf` to point to the GCS bucket for Terraform state management
 2. Update `terraform/terraform.tfvars` with your *Project ID*, *Region*, and *Name Prefix*. 
-3. Execute the updated configuration
+3. Execute the updated configuration from the `terraform` folder
 ```
 cd terraform
 terraform init
 terraform apply
 ```
-
+You can execute the above commands from any workstation configured with Google Cloud SDK and Terraform, including Cloud Shell and the custom dev image.
 
 ## Deploying KFP pipelines
 
@@ -76,9 +76,9 @@ The deployment of Kubeflow Pipelines to the environment's GKE cluster has been a
 In the reference configuration, KFP utilizes external MySQL instance and object storage. The KFP services are designed to read the connection settings (including credentials)  from Kubernetes Secrets and ConfigMaps. 
 
 To configure connection settings:
-1.1. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance. The instance created by the Terraform configuration has the root user removed.
+1. Make sure that your Cloud SQL instance has the `root` user with a non-blank password.  The instance created by the provided Terraform configuration has the root user removed. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance.
 1. Navigate to the `kustomize` folder.
-1. Use Cloud Console or the `gcloud` command to create and download the JSON type private key for the KFP service user that was created by Terraform. Rename the file to `application_default_credentials.json`
+1. Use Cloud Console or the `gcloud` [command](https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/keys/create)  to create and download the JSON type private key for the KFP service user that was created by Terraform. Unless you modified the Terraform configurations the user name will be [YOUR PREFIX]-kfp-cluster@[YOUR PROJECT ID].iam.gserviceaccount.com. Rename the file to `application_default_credentials.json`
 1. Rename `gcp-configs.env.template` and `mysql-credential.env.template` to `gcp-configs.env` and `mysql-credential.env`. Replace the placeholders in the files with your values.
 **Note that mysql-credential.env and application_default_credentials.json contain sensitive information. Remeber to remove or secure the files after the installation process completes.**
  
