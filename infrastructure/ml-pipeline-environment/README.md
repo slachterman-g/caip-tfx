@@ -13,7 +13,7 @@ This folder contains deployment configurations for a reference ML Environment. T
 The reference enviroment topology and configuration can be fine tuned for a specific role. For example Staging and Production environments optimized for a continuos training worfklow may not utilize AI Platform Notebooks or AI Platform Prediction services.
 
 ## Provisioning an Environment
-You can utilize the provided Infrastructure As Code (IaC) configurations and scripts to fine tune and provision an environment. In the reference environment, all services are configured in a single GCP projects. If you provision multiple environments (e.g. Development, Staging, and Production) each environment should utilize a dedictated project.
+In the reference environment, all services are configured in a single GCP projects. If you provision multiple environments (e.g. Development, Staging, and Production) each environment should utilize a dedictated project.
 
 Currently, Kubeflow Pipelines is not available as a managed service. In the reference environment, the KFP services are deployed to a dedicated GKE cluster and configured to utilize:
 - A Cloud SQL managed MySQL for ML Metadata and KFP Metadata databases
