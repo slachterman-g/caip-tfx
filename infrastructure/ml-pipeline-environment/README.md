@@ -1,10 +1,15 @@
-# Development Environment deployment configurations.
+# MLOPS Environment deployment configurations.
 
-This folder contains deployment configurations for a reference Development Environment. The core services in the environment include:
-- AI Platform Notebooks
-- AI Platform Training
-- AI Platform Prediction
-- Kubeflow Pipelines (KFP)
+This folder contains deployment configurations for a reference ML Environment. The core services in the environment include:
+- Experimentation and Development - AI Platform Notebooks
+- Scalable Training - AI Platform Training
+- Scalable Inference - AI Platform Prediction
+- Scalable Data Preprocessing - Dataflow
+- Orchestration and ML Metadata - Kubeflow Pipelines (KFP)
+
+![Reference topolgy](/images/environment.png)
+
+The reference enviroment topology and configuration can be fine tuned for a specific role. For example Staging and Production Training environments may not utilize AI Platform Notebooks or AI Platform Prediction.
 
 Currently, Kubeflow Pipelines is not available as a managed service. In the reference environment, the KFP services are deployed to a dedicated GKE cluster and configured to utilize:
 - A Cloud SQL managed MySQL for ML Metadata and KFP Metadata databases
