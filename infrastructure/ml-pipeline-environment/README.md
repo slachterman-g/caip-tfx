@@ -10,20 +10,34 @@ This folder contains deployment configurations for a reference ML Environment. T
 
 ![Reference topolgy](/images/environment.png)
 
-In the reference environment, AI Platform Notebooks are used as a primary workbench for experimentation and development. If you prefer to work in an IDE style environment the instructions for configuring Visual Studio Code for use with custom development container images can be found in the `dev-images` sections of this guide.
-
-The reference enviroment topology and configuration can be fine tuned for a specific role. For example Staging and Production environments configured for Training may not utilize AI Platform Notebooks or AI Platform Prediction services.
+The reference enviroment topology and configuration can be fine tuned for a specific role. For example Staging and Production environments optimized for a continuos training worfklow may not utilize AI Platform Notebooks or AI Platform Prediction services.
 
 ## Provisioning an Environment
-You can utilize the provided Infrastructure As Code (IaC) configurations and scripts to fine tune and provision an environment.
+You can utilize the provided Infrastructure As Code (IaC) configurations and scripts to fine tune and provision an environment. In the reference environment, all services are configured in a single GCP projects. If you provision multiple environments (e.g. Development, Staging, and Production) each environment should utilize a dedictated project.
+
 Currently, Kubeflow Pipelines is not available as a managed service. In the reference environment, the KFP services are deployed to a dedicated GKE cluster and configured to utilize:
 - A Cloud SQL managed MySQL for ML Metadata and KFP Metadata databases
 - A Cloud Storage bucket for object storage
 
-To configure the environment:
-1. Enable the required Cloud Services
-1. Provision infrastructure for Kubeflow Pipelines
-1. Deploy KFP pipelines 
+Provisioning of an environment has been organized as a three step process:
+1. Enabling the required Cloud Services
+1. Provisioning infrastructure for Kubeflow Pipelines and configuring service accounts and permissions
+1. Deploying KFP pipelines 
+
+## Enabling Cloud Services
+The following GCP Cloud APIs need to be enabled in the project hosting an environment:
+1. Compute Engine
+2. Cloud Storage
+3. Container Registry
+4. Kubernetes Engine
+5. BigQuery
+6. Cloud Build
+7. Cloud Resource Manager
+8. Cloud Machine Learning Engine
+9. IAM
+10. Cloud SQL
+11. Dataflow
+
 
 ## Provisioning the Kubeflow Pipelines infrastructure
 
@@ -51,6 +65,8 @@ terraform apply
 
 
 ## Deploying KFP pipelines
+
+The deployment of Kubeflow Pipelines to the environment's GKE cluster has been automated with **Kustomize**. The **Kustomize** configuration rely on the most current version of **Kustomize**. Make sure to install the latest version of **Kustomize** using [the following procedure](https://github.com/kubernetes-sigs/kustomize/blob/master/docs/INSTALL.md). If you use the development container image the tested version of **Kustomize** is pre-installed in the image.
 
 ### Configuring connections settings to Cloud SQL and Cloud Storage
 
