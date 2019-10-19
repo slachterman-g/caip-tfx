@@ -32,7 +32,7 @@ To execute the above steps you need a workstation with the following components 
 
 All the required components are pre-configured in the *tfx-dev* image. The following instructions assume that you utilize the *tfx-dev* image. If you prefer to use another client - for example Cloud Shell - make sure that you have installed the latest versions of **Google Cloud SDK**, **Kustomize**, and **kubectl**. 
 
-If you use the *tfx-dev* image for the first time make sure to initialize the access your project with `gcloud init` and `gcloud auth application-default login` commands before proceeding with the below instructions.
+If you use the *tfx-dev* image for the first time, make sure to initialize the access to your project with `gcloud init` and `gcloud auth application-default login` commands before proceeding with the below instructions.
 
 ## Enabling Cloud Services
 The following GCP Cloud APIs need to be enabled in the project hosting an environment:
