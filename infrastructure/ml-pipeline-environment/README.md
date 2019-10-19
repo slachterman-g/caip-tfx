@@ -10,7 +10,7 @@ This folder contains deployment configurations for a reference ML Environment. T
 
 ![Reference topolgy](/images/environment.png)
 
-AI Platform Notebooks are a primary workbench for experimentation and development. If you prefer to work in an IDE style environment the instructions for configuring Visual Studio Code for use with custom development container images can be found in the `dev-images` sections of this guide.
+In the reference environment, AI Platform Notebooks are a primary workbench for experimentation and development. If you prefer to work in an IDE style environment the instructions for configuring Visual Studio Code for use with custom development container images can be found in the `dev-images` sections of this guide.
 
 The reference enviroment topology and configuration can be fine tuned for a specific role. For example Staging and Production environments configured for Training may not utilize AI Platform Notebooks or AI Platform Prediction services.
 
