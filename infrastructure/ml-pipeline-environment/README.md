@@ -30,7 +30,7 @@ To execute the above steps you need a workstation with the following components 
 - Kustomize
 - kubectl
 
-All the required components are pre-configured in the dev-image. 
+All the required components are pre-configured in the *tfx-dev* image. The following instructions assume that you utilize the *tfx-dev* image. If you prefer to use another client - for example Cloud Shell - make sure that you have installed the latest versions of **Google Cloud SDK**, **Kustomize**, and **kubectl**. 
 
 ## Enabling Cloud Services
 The following GCP Cloud APIs need to be enabled in the project hosting an environment:
@@ -73,7 +73,6 @@ cd terraform
 terraform init
 terraform apply
 ```
-You can execute the above commands from any workstation configured with Google Cloud SDK and Terraform, including Cloud Shell and the custom dev image.
 
 ## Deploying KFP pipelines
 
