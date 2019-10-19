@@ -5,7 +5,8 @@ This folder contains deployment configurations for a reference ML Environment. T
 - Scalable Training - AI Platform Training
 - Scalable Inference - AI Platform Prediction
 - Scalable Data Preprocessing - Dataflow
-- Orchestration and ML Metadata - Kubeflow Pipelines (KFP)
+- Orchestration - Kubeflow Pipelines (KFP)
+- ML Metadata - Cloud SQL
 
 ![Reference topolgy](/images/environment.png)
 
