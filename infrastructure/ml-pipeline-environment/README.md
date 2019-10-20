@@ -86,22 +86,9 @@ The KFP services access the Cloud SQL instance through Cloud SQL Proxy. To enabl
 *Note: In the current release of KFP, the Cloud SQL instance needs to be configured with the root user with no password. The instance created by the Terraform configuration conforms to his constraint. This will be mitigated in the upcoming releases.*
 
 To configure connection settings:
-1. Make sure that your Cloud SQL instance has the `root` user with a non-blank password.  The instance created by the provided Terraform configuration has the root user removed. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance.
-2. Use Cloud Console or the `gcloud` [command](https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/keys/create)  to create and download the JSON type private key for the KFP service user. If you provisioned the infrastructure with the provided Terraform configurations the user name is `[YOUR PREFIX]-kfp-cluster@[YOUR PROJECT ID].iam.gserviceaccount.com`. Rename the file to `application_default_credentials.json`. **Note that application_default_credentials.json contain sensitive information. Remeber to remove or secure the file after the installation process completes.**
-3. Create a Kubernetes namespace. The default name is *kubeflow*. If you want to use a different name make sure to update the `kustomize.yaml` file as described in the following steps.
-```
-gcloud container clusters get-credentials [YOUR_CLUSTER_NAME] --zone [YOUR_CLUSTER_ZONE]
-kubectl create namespace kubeflow
-```
-4. Create the `user-gcp-sa` Kubernetes secret.
-```
-kubectl -n kubeflow create secret generic user-gcp-sa --from-file=application_default_credentials.json  --from-file=user-gcp-sa.json=application_default_credentials.json
-```
-5. Create the `mysql-credential` Kubernetes secret.
-```
-kubectl -n kubeflow create secret generic mysql-credential --from-literal=username=root --from-literal=password=[YOUR PASSWORD]
-```
-6. Rename `gcp-configs.env.template` to `gcp-configs.env`. Replace the placeholders in the file with the values from your environment. Don't use the `gs://` prefix when configuring the *bucket_name*. If you provisioned the infrastructure with the provided Terraform configurations the bucket name is `[YOUR_PREFIX]-artifact-store`. Use the following format for the *connection_name* - [YOUR PROJECT]:[YOUR REGION]:[YOUR INSTANCE NAME]. If you provisioned the infrastructure with the provided Terraform configurations the instance name is `[YOUR PREFIX]-ml-metadata`.
+1. Use Cloud Console or the `gcloud` [command](https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/keys/create)  to create and download the JSON type private key for the KFP service user. If you provisioned the infrastructure with the provided Terraform configurations the user name is `[YOUR PREFIX]-kfp-cluster@[YOUR PROJECT ID].iam.gserviceaccount.com`. Rename the file to `application_default_credentials.json`. **Note that application_default_credentials.json contain sensitive information. Remeber to remove or secure the file after the installation process completes.**
+
+2. Rename `gcp-configs.env.template` to `gcp-configs.env`. Replace the placeholders in the file with the values for your environment. Don't use the `gs://` prefix when configuring the *bucket_name*. If you provisioned the infrastructure with the provided Terraform configuration, the bucket name is `[YOUR_PREFIX]-artifact-store`. Use the following format for the *connection_name* - [YOUR PROJECT]:[YOUR REGION]:[YOUR INSTANCE NAME]. If you provisioned the infrastructure with the provided Terraform configuration the instance name is `[YOUR PREFIX]-ml-metadata`.
 
  
 ### Installing Kubeflow Pipelines
