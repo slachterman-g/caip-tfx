@@ -1,6 +1,6 @@
 terraform {
  backend "gcs" {
    bucket  = "jkterraform"
-   prefix  = "terraform/state/mlops/caip-tfx/dev-env5"
+   prefix  = "terraform/state/kfp-environment/1"
  }
 }

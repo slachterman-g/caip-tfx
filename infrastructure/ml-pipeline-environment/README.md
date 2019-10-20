@@ -18,24 +18,13 @@ Currently, Kubeflow Pipelines is not available as a managed service. In the refe
 
 The reference enviroment topology and configuration can be fine tuned for a specific role. For example Staging and Production environments optimized for a continuos training worfklow may not utilize AI Platform Notebooks or AI Platform Prediction services.
 
-## Provisioning an Environment
+## Environment provisioning
 
-Provisioning of an environment has been organized as a three step process:
-1. Enabling the required Cloud Services
-1. Provisioning infrastructure for Kubeflow Pipelines 
-1. Deploying Kubeflow Pipelines 
+The provisioning of an enviroment is a two step process
+1. Provisioning the infrastructure for Kubeflow Pipelines 
+1. Deploying Kubeflow Pipelines services 
 
-To execute the above steps you need a workstation with the following components installed:
-- Google Cloud SDK 
-- Kustomize
-- kubectl
-
-All the required components are pre-configured in the *tfx-dev* image. The following instructions assume that you utilize the *tfx-dev* image. If you prefer to use another client - for example Cloud Shell - make sure that you have installed the latest versions of **Google Cloud SDK**, **Kustomize**, and **kubectl**. 
-
-If you use the *tfx-dev* image for the first time, make sure to initialize the access to your project with `gcloud init` and `gcloud auth application-default login` commands before proceeding with the below instructions.
-
-## Enabling Cloud Services
-The following GCP Cloud APIs need to be enabled in the project hosting an environment:
+The following GCP Cloud APIs  must be enabled in the project hosting the environment:
 1. Compute Engine
 2. Cloud Storage
 3. Container Registry
@@ -62,13 +51,21 @@ The MVP infrastructure to support a lightweight deployment of Kubeflow Pipelines
 If you want to utilize the existing services - e.g. the existing GKE cluster or existing Cloud SQL instance - make sure that they are configured as follows:
 (TBD)
 
-You can provision all services required to host Kubeflow Pipelines using the provided Terraform configurations. The configurations utilize the modules from
-https://github.com/jarokaz/terraform-gcp-kfp.
-Refer to the module's documentation for more information.
+If you prefer to create a brand new infrastructure you can utilize the Terraform configuration provided in the `terraform` folder.
+
+To use Terraform you need a workstation with the following components installed:
+- Google Cloud SDK 
+- Terraform
+- Kustomize
+- kubectl
+
+All these components are pre-configured in the *tfx-dev* image. The following instructions assume that you utilize the *tfx-dev* image. If you prefer to use another client - for example Cloud Shell - make sure that you have installed the latest versions of **Google Cloud SDK**, **Kustomize**, and **kubectl**. 
+
+If you use the *tfx-dev* image for the first time, make sure to initialize the access to your project with `gcloud init` and `gcloud auth application-default login` commands before proceeding with the below instructions.
 
 To provision the infrastructure:
 
-1. Update `terraform/backend.tf` to point to the GCS bucket and folder for Terraform state management. You can use the bucket in any project as long you have access to it.
+1. Update `terraform/backend.tf` to point to the GCS bucket and folder for Terraform state management. You can use a bucket in any project as long you have access to it.
 2. Update `terraform/terraform.tfvars` with your *Project ID*, *Region*, and *Name Prefix*. The *Name Prefix* value will be added to the names of provisioned resources including: GKE cluster name, GCS bucket name, Cloud SQL instance name.
 3. Execute the updated configuration from the `terraform` folder
 ```
@@ -84,7 +81,7 @@ Before applying the provided **Kustomize** overlays you need to configure connec
 
 ### Configuring connections settings to Cloud SQL and Cloud Storage
 
-In the reference configuration, KFP utilizes a Cloud SQL hosted MySQL instance as the ML Metadata database and a GCS storage bucket as the artifacts store. The KFP services access the Cloud SQL instance through Cloud SQL Proxy. To enable this access path, tCloud SQL Proxy needs to be configured with a private key of the KFP service account and the KFP services need access to the credentials of the root user of the Cloud SQL instance. The private key and the credentials are stored as Kubernetes secrets. In addtion, the URIs to the GCS bucket and the Cloud SQL instance are stored as a Kubernetes ConfigMap.
+In the reference configuration, KFP utilizes a Cloud SQL hosted MySQL instance as the ML Metadata database and a GCS storage bucket as the artifacts store. The KFP services access the Cloud SQL instance through Cloud SQL Proxy. To enable this access path, the Cloud SQL Proxy needs to be configured with a private key of the KFP service account and the KFP services need access to the credentials of a Cloud SQL database user. The private key and the credentials are stored as Kubernetes secrets. In addtion, the URIs to the GCS bucket and the Cloud SQL instance are stored in a Kubernetes ConfigMap.
 
 To configure connection settings:
 1. Make sure that your Cloud SQL instance has the `root` user with a non-blank password.  The instance created by the provided Terraform configuration has the root user removed. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance.
