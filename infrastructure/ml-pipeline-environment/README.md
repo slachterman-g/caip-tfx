@@ -101,6 +101,12 @@ gcloud container clusters get-credentials  [YOUR CLUSTER NAME] --zone [YOUR ZONE
 kustomize build . | kubectl apply -f -
 ```
 
+### Creating `user-gcp-sa` secret
+Some pipelines - including TFX pipelines - use the pivate key stored in the `user-gcp-sa` secret to access GCP services. Use the same private key you used for configure Cloud SQL Proxy.
+```
+kubectl create secret -n [your-namespace] generic user-gcp-sa --from-file=user-gcp-sa.json=application_default_credentials.json
+```
+
 ## Accessing KFP UI
 
 After the installation completes, you can access the KFP UI from the following URL. You may need to wait a few minutes before the URL is operational.
