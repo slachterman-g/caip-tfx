@@ -81,7 +81,8 @@ Before applying the provided **Kustomize** overlays you need to configure connec
 
 ### Configuring connections settings to Cloud SQL and Cloud Storage
 
-In the reference configuration, KFP utilizes a Cloud SQL hosted MySQL instance as the ML Metadata database and a GCS storage bucket as the artifacts store. The KFP services access the Cloud SQL instance through Cloud SQL Proxy. To enable this access path, the Cloud SQL Proxy needs to be configured with a private key of the KFP service account and the KFP services need access to the credentials of a Cloud SQL database user. The private key and the credentials are stored as Kubernetes secrets. In addtion, the URIs to the GCS bucket and the Cloud SQL instance are stored in a Kubernetes ConfigMap.
+The KFP services access the Cloud SQL instance through Cloud SQL Proxy. To enable this access path, the Cloud SQL Proxy needs to be configured with a private key of the KFP service account and the KFP services need access to the credentials of a Cloud SQL database user. The private key and the credentials are stored as Kubernetes secrets. The URIs to the GCS bucket and the Cloud SQL instance are stored in a Kubernetes ConfigMap.
+
 *Note: In the current release of KFP, the Cloud SQL instance needs to have the root user with no password. The instance created by the Terraform configuration conforms to his constraint. This will be mitigated in the upcoming releases.*
 
 To configure connection settings:
