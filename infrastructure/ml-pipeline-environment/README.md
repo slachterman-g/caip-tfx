@@ -83,7 +83,7 @@ Before applying the provided **Kustomize** overlays you need to configure connec
 
 The KFP services access the Cloud SQL instance through Cloud SQL Proxy. To enable this access path, the Cloud SQL Proxy needs to be configured with a private key of the KFP service account and the KFP services need access to the credentials of a Cloud SQL database user. The private key and the credentials are stored as Kubernetes secrets. The URIs to the GCS bucket and the Cloud SQL instance are stored in a Kubernetes ConfigMap.
 
-*Note: In the current release of KFP, the Cloud SQL instance needs to have the root user with no password. The instance created by the Terraform configuration conforms to his constraint. This will be mitigated in the upcoming releases.*
+*Note: In the current release of KFP, the Cloud SQL instance needs to be configured with the root user with no password. The instance created by the Terraform configuration conforms to his constraint. This will be mitigated in the upcoming releases.*
 
 To configure connection settings:
 1. Make sure that your Cloud SQL instance has the `root` user with a non-blank password.  The instance created by the provided Terraform configuration has the root user removed. Use Cloud Console or the `gcloud` command to create the `root` user in the MySQL instance.
