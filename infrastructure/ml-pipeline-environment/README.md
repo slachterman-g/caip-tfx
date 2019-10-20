@@ -97,6 +97,7 @@ To install KFP pipelines:
 1. Update the `kustomize/kustomization.yaml` with the name the namespace if you want to change the default name.
 1. Apply the manifests. From the `kustomize` folder execute the following commands:
 ```
+gcloud container clusters get-credentials  [YOUR CLUSTER NAME] --zone [YOUR ZONE]
 kustomize build . | kubectl apply -f -
 ```
 
