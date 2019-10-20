@@ -102,7 +102,7 @@ kustomize build . | kubectl apply -f -
 ```
 
 ### Creating `user-gcp-sa` secret
-Some pipelines - including TFX pipelines - use the pivate key stored in the `user-gcp-sa` secret to access GCP services. Use the same private key you used for configure Cloud SQL Proxy.
+Some pipelines - including TFX pipelines - use the pivate key stored in the `user-gcp-sa` secret to access GCP services. Use the same private key you used when configuring Cloud SQL Proxy.
 ```
 kubectl create secret -n [your-namespace] generic user-gcp-sa --from-file=user-gcp-sa.json=application_default_credentials.json
 ```
