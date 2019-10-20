@@ -1,6 +1,6 @@
 # MLOPS Environment deployment configurations.
 
-This folder contains deployment configurations for a reference ML Environment. The core services in the environment include:
+This folder contains deployment configurations for a reference MLOps Environment. The core services in the environment include:
 - Experimentation and Development - AI Platform Notebooks
 - Scalable Training - AI Platform Training
 - Scalable Inference - AI Platform Prediction
