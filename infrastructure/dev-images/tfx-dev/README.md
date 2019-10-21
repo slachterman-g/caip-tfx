@@ -42,7 +42,7 @@ You can also use the image with Visual Studio Code for both local and remote dev
 ```
 FROM gcr.io/[YOUR PROJECT ID]/tfx-dev-3.6
 ```
-4. In the `.devcontainer` folder create the `devcontainer.json` file. Refer to https://github.com/microsoft/vscode-dev-containers/tree/master/containers/docker-existing-dockerfile for more information about the configuration options. The below configuration tells VSC to use create an image using the provided Dockerfile and install Microsoft Python extension after the container is started.
+4. In the `.devcontainer` folder create the `devcontainer.json` file. Refer to https://github.com/microsoft/vscode-dev-containers/tree/master/containers/docker-existing-dockerfile for more information about the configuration options. The below configuration tells VSC to create an image using the provided Dockerfile and install Microsoft Python extension after the container is started.
 ```
 {
 	"name": "Existing Dockerfile",
