@@ -2,6 +2,6 @@ pipeline:
   name: chicago_taxi
   model_name: chicago_taxi
 environment:
-  project_id: jk-demo1
+  project_id: jk-demo3
   region: us-central1
-  artifact_store: gs://jk-demo-artifacts
+  artifact_store: gs://tfx-dev6-artifact-store

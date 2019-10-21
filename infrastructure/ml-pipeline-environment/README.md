@@ -38,6 +38,7 @@ The following GCP Cloud APIs  must be enabled in the project hosting the environ
 11. Cloud SQL Admin
 12. Dataflow
 
+In addition, the Cloud Build service account must be granted the Kubernetes Engine Developer role.
 
 ## Provisioning the Kubeflow Pipelines infrastructure
 
