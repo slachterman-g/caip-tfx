@@ -28,7 +28,7 @@ You can also use the image with Visual Studio Code for both local and remote dev
 ### Preparing your MacOS workstation
 1. Install and initialize [Google Cloud SDK](https://cloud.google.com/sdk/docs/quickstart-macos)
 
-1. [Install Docker (On a Mac install Docker Desktop for Mac](https://docs.docker.com/docker-for-mac/install/)
+1. [Install Docker Desktop for Mac](https://docs.docker.com/docker-for-mac/install/)
 
 1. [Install Visual Studio Code](https://code.visualstudio.com/download)
 
