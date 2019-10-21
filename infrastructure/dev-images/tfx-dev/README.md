@@ -20,7 +20,7 @@ Since the image is a derivative of a Deep Learning container it can be used to p
 ## Creating an AI Platform Notebook 
 To create an AI Platform Notebook based on the image:
 1. Build the image and push it into your project's **Container Registry**. The `build.sh` script demonstrates how to build and push the image using **Cloud Build**
-2. Create a CPU based AI Platform Notebook using [Cloud Console](https://console.cloud.google.com/ai-platform/notebooks/instances). When configuring the notebook host use the **Customize instance** option and select **Custom container** in the **Environment** drop list. Enter the full URI to the custom image created in the previous step.
+2. Create a CPU based AI Platform Notebook using [Cloud Console](https://console.cloud.google.com/ai-platform/notebooks/instances). When configuring the notebook's host VM,  use the **Customize instance** option and select **Custom container** in the **Environment** drop list. Enter the full URI to the custom image created in the previous step.
 
 ## Using the TFX/KFP development image with Visual Studio Code
 You can also use the image with Visual Studio Code for both local and remote development.  The following instructions were tested on MacOS but should be transferable to other platforms.
