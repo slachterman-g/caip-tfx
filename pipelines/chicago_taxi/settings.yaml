@@ -1,6 +1,7 @@
 pipeline:
-  name: chicago_taxi
-  model_name: chicago_taxi
+  name: chicago_taxi_4
+  model_name: chicago_taxi_4
+  training_image: gcr.io/jk-demo3/tfx_demo:latest
 environment:
   project_id: jk-demo3
   region: us-central1

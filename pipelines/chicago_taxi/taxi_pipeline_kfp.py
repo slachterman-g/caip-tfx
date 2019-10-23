@@ -50,6 +50,7 @@ SETTINGS_FILE = 'settings.yaml'
 settings = yaml.safe_load(pathlib.Path(SETTINGS_FILE).read_text())
 _pipeline_name = settings['pipeline']['name']
 _model_name = settings['pipeline']['model_name']
+_training_image = settings['pipeline']['training_image']
 _project_id = settings['environment']['project_id']
 _gcp_region = settings['environment']['region']
 _artifact_store = settings['environment']['artifact_store']
@@ -67,6 +68,7 @@ _beam_tmp_folder = '{}/beam/tmp'.format(_artifact_store)
 _ai_platform_training_args = {
     'project': _project_id,
     'region': _gcp_region,
+    'masterConfig': _training_image
 }
 
 # AI Platform Prediction model parameters
@@ -223,13 +225,14 @@ metadata_config.mysql_db_user.environment_variable = 'MYSQL_USERNAME'
 metadata_config.mysql_db_password.environment_variable = 'MYSQL_PASSWORD'
 
 # Kubeflow Runner Configuration 
-tfx_image = os.environ.get('KUBEFLOW_TFX_IMAGE', None)
+# tfx_image = os.environ.get('KUBEFLOW_TFX_IMAGE', None)
+
 
 operator_funcs = [gcp.use_gcp_secret('user-gcp-sa'), use_mysql_secret('mysql-credential')]
 runner_config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
     kubeflow_metadata_config=metadata_config,
     pipeline_operator_funcs=operator_funcs,
-    tfx_image=tfx_image
+    tfx_image=_training_image
 )
 
 

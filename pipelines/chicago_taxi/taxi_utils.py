@@ -11,8 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Trainer module for chicago taxi pipeline
+"""Python source file include taxi pipeline functions and necesasry utils.
 
+For a TFX pipeline to successfully run, a preprocessing_fn and a
+_build_estimator function needs to be provided.  This file contains both.
+
+This file is equivalent to examples/chicago_taxi/trainer/model.py and
+examples/chicago_taxi/preprocess.py.
 """
 
 from __future__ import division
@@ -57,11 +62,14 @@ _VOCAB_FEATURE_KEYS = [
 _LABEL_KEY = 'tips'
 _FARE_KEY = 'fare'
 
+
 def _transformed_name(key):
   return key + '_xf'
 
+
 def _transformed_names(keys):
   return [_transformed_name(key) for key in keys]
+
 
 # Tf.Transform considers these features as "raw"
 def _get_raw_feature_spec(schema):
@@ -73,6 +81,69 @@ def _gzip_reader_fn(filenames):
   return tf.data.TFRecordDataset(
       filenames,
       compression_type='GZIP')
+
+
+def _fill_in_missing(x):
+  """Replace missing values in a SparseTensor.
+
+  Fills in missing values of `x` with '' or 0, and converts to a dense tensor.
+
+  Args:
+    x: A `SparseTensor` of rank 2.  Its dense shape should have size at most 1
+      in the second dimension.
+
+  Returns:
+    A rank 1 tensor where missing values of `x` have been filled in.
+  """
+  default_value = '' if x.dtype == tf.string else 0
+  return tf.squeeze(
+      tf.sparse.to_dense(
+          tf.SparseTensor(x.indices, x.values, [x.dense_shape[0], 1]),
+          default_value),
+      axis=1)
+
+
+def preprocessing_fn(inputs):
+  """tf.transform's callback function for preprocessing inputs.
+
+  Args:
+    inputs: map from feature keys to raw not-yet-transformed features.
+
+  Returns:
+    Map from string feature key to transformed feature operations.
+  """
+  outputs = {}
+  for key in _DENSE_FLOAT_FEATURE_KEYS:
+    # Preserve this feature as a dense float, setting nan's to the mean.
+    outputs[_transformed_name(key)] = tft.scale_to_z_score(
+        _fill_in_missing(inputs[key]))
+
+  for key in _VOCAB_FEATURE_KEYS:
+    # Build a vocabulary for this feature.
+    outputs[_transformed_name(key)] = tft.compute_and_apply_vocabulary(
+        _fill_in_missing(inputs[key]),
+        top_k=_VOCAB_SIZE,
+        num_oov_buckets=_OOV_SIZE)
+
+  for key in _BUCKET_FEATURE_KEYS:
+    outputs[_transformed_name(key)] = tft.bucketize(
+        _fill_in_missing(inputs[key]), _FEATURE_BUCKET_COUNT,
+        always_return_num_quantiles=False)
+
+  for key in _CATEGORICAL_FEATURE_KEYS:
+    outputs[_transformed_name(key)] = _fill_in_missing(inputs[key])
+
+  # Was this passenger a big tipper?
+  taxi_fare = _fill_in_missing(inputs[_FARE_KEY])
+  tips = _fill_in_missing(inputs[_LABEL_KEY])
+  outputs[_transformed_name(_LABEL_KEY)] = tf.compat.v1.where(
+      tf.math.is_nan(taxi_fare),
+      tf.cast(tf.zeros_like(taxi_fare), tf.int64),
+      # Test if the tip was > 20% of the fare.
+      tf.cast(
+          tf.greater(tips, tf.multiply(taxi_fare, tf.constant(0.2))), tf.int64))
+
+  return outputs
 
 
 def _build_estimator(config, hidden_units=None, warm_start_from=None):
@@ -162,12 +233,13 @@ def _eval_input_receiver_fn(tf_transform_output, schema):
   # Notice that the inputs are raw features, not transformed features here.
   raw_feature_spec = _get_raw_feature_spec(schema)
 
-  serialized_tf_example = tf.placeholder(
+  serialized_tf_example = tf.compat.v1.placeholder(
       dtype=tf.string, shape=[None], name='input_example_tensor')
 
   # Add a parse_example operator to the tensorflow graph, which will parse
   # raw, untransformed, tf examples.
-  features = tf.parse_example(serialized_tf_example, raw_feature_spec)
+  features = tf.io.parse_example(
+      serialized=serialized_tf_example, features=raw_feature_spec)
 
   # Now that we have our raw examples, process them through the tf-transform
   # function computed during the preprocessing step.
@@ -205,7 +277,8 @@ def _input_fn(filenames, tf_transform_output, batch_size=200):
   dataset = tf.data.experimental.make_batched_features_dataset(
       filenames, batch_size, transformed_feature_spec, reader=_gzip_reader_fn)
 
-  transformed_features = dataset.make_one_shot_iterator().get_next()
+  transformed_features = tf.compat.v1.data.make_one_shot_iterator(
+      dataset).get_next()
   # We pop the label because we do not want to use it as a feature while we're
   # training.
   return transformed_features, transformed_features.pop(
