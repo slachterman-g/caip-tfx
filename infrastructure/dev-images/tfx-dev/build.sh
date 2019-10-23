@@ -17,7 +17,7 @@
 
 PROJECT_ID=$(gcloud config get-value core/project)
 IMAGE_NAME=tfx-dev
-TAG=latest
+TAG=KFP132TFX014
 PYTHON=3.6
 
 IMAGE_URI="gcr.io/${PROJECT_ID}/${IMAGE_NAME}-${PYTHON}:${TAG}"
