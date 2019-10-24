@@ -7,7 +7,12 @@ RUN PROTOC_ZIP=protoc-3.7.1-linux-x86_64.zip \
 && unzip -o $PROTOC_ZIP -d /usr/local include/* \
 && rm -f $PROTOC_ZIP
 RUN conda create -n tfx python=3.6 && source activate tfx \
-&& pip install tensorflow==1.14 httplib2==0.12.0 tfx==0.14.0 \
+&& pip install tensorflow==1.15 \
+&& pip install tensorflow-serving-api==1.15 \
+&& git clone https://github.com/tensorflow/tfx.git -b r0.15 \
+&& cd tfx \
+&& python setup.py sdist \
+&& pip install dist/*  \
 && RELEASE=0.1.32 \
 && pip install https://storage.googleapis.com/ml-pipeline/release/$RELEASE/kfp.tar.gz  \
 && python -m ipykernel install --name tfx 
