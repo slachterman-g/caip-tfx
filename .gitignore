@@ -110,4 +110,5 @@ gcp-configs.env
 
 test.yaml
 .terraform
+.vscode
 
