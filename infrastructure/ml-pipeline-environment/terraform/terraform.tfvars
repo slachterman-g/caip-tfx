@@ -1,4 +1,4 @@
-project_id   = "jk-demo3"
+project_id   = "jk-tfw-demo"
 region       = "us-central1"
 zone         = "us-central1-a"
-name_prefix  = "tfx-dev6"
+name_prefix  = "tfw-demo"
