@@ -4,9 +4,9 @@ This folder contains the Dockerfile and the build script for the AI Platform Not
 
 The  image is a derivative of the `base-cpu` Deep Learning container (`gcr.io/deeplearning-platform-release/base-cpu`) and includes the following additional components:
 - Python 3.6
-- Tensorflow 1.14
-- TFX - the latest build from the master branch
-- KFP SDK - the latest build from the master branch 
+- Tensorflow 1.15
+- TFX - 0.15.0rc0
+- KFP SDK - 1.32
 - Python Fire 
 - kubectl
 - mysql client
